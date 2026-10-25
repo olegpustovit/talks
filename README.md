@@ -42,9 +42,10 @@ make deploy          # linux/arm64 → oracle-vm + smdctl
 
 ## Frontend-only deployment
 
-The public frontend is intended for https://talks.olegpustovit.com on Cloudflare
-Pages. It runs entirely in the browser, with keyboard, touch, fullscreen, and
-speaker notes. Phone remote control requires the separate Go deployment.
+The frontend runs at https://talks-4uu.pages.dev on Cloudflare Pages.
+`talks.olegpustovit.com` is registered with Pages and awaits its CNAME record.
+It runs entirely in the browser, with keyboard, touch, fullscreen, and speaker
+notes. Phone remote control requires the separate Go deployment.
 
 ```sh
 bun run build:static
@@ -52,14 +53,14 @@ bunx --no-install wrangler pages deploy apps/site/dist --project-name=talks --br
 ```
 
 Pages serves `apps/site/dist`; its default SPA fallback handles `/t/<slug>`.
-For automatic deployments, connect `olegpustovit/talks` to Cloudflare Pages,
-select `master`, set the build command to
-`bun run typecheck && bun run build:static`, output directory to
-`apps/site/dist`, and `BUN_VERSION=1.3.13`.
-The GitHub Actions workflow independently checks the frontend on pushes and PRs.
-Cloudflare's GitHub integration deploys without a Cloudflare secret in GitHub.
-Associate `talks.olegpustovit.com` with the Pages project, then point that
-hostname's CNAME at the project's assigned `pages.dev` domain.
+The GitHub Actions workflow checks pull requests and deploys pushes to `master`.
+Set the repository secret `CLOUDFLARE_API_TOKEN` with Cloudflare Pages Edit;
+`CLOUDFLARE_ACCOUNT_ID` is configured as a repository variable. A local Wrangler
+OAuth login is not a persistent CI credential. The project uses Direct Upload
+because the account's GitHub installation could not connect during setup.
+
+DNS setup: add a CNAME named `talks` in `olegpustovit.com` pointing to
+`talks-4uu.pages.dev`. Pages already has the custom domain association.
 
 For Go deployments, copy `smdctl.yml` to the ignored `smdctl.local.yml` and set
 `SLIDES_PASSWORD` there. `make deploy` requires that private local file. Never
