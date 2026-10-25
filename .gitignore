@@ -41,3 +41,6 @@ internal/web/dist/**
 smdctl.local.yml
 *.pem
 *.key
+
+# direnv can contain local API credentials
+.envrc
