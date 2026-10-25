@@ -1,0 +1,43 @@
+.DS_Store
+*.log
+
+# Emscripten output from demos/*/build.sh
+meetups/**/demos/**/*.mjs
+meetups/**/demos/**/*.wasm
+meetups/**/demos/**/*.wasm.map
+
+# .claude/ is gitignored. Skills sync bidirectionally with .agents/skills
+# (last-write-wins per skill directory). Non-skill .agents content still
+# mirrors into .claude. Claude runtime (settings.json, settings.local.json,
+# worktrees) is never touched. Track skills in .agents/, not here.
+.claude/
+
+# Node / Turborepo
+node_modules/
+.turbo/
+dist/
+*.tsbuildinfo
+
+# Go binary + embedded Vite output (rebuilt by `make build`)
+bin/
+internal/web/dist/**
+!internal/web/dist/index.html
+
+
+# Python examples next to decks
+**/__pycache__/
+*.pyc
+
+# macOS metadata and local terminal crash dump
+._*
+/m1.raw
+
+# Local credentials and deployment configuration
+.env
+.env.*
+!.env.example
+.dev.vars*
+.wrangler/
+smdctl.local.yml
+*.pem
+*.key

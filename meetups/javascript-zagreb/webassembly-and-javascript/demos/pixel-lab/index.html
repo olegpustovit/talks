@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0d0816" />
+    <title>Pixel lab · WebAssembly and JavaScript</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <a href="../../index.html#22">← back to deck</a>
+          <h1>Pixel lab</h1>
+          <p>One RGBA buffer crosses into C++, changes in place, and comes back.</p>
+        </div>
+        <div class="runtime" data-runtime><i></i><span>loading</span></div>
+      </header>
+
+      <section class="controls" aria-label="Effect controls">
+        <label>
+          <span>Posterization levels</span>
+          <input type="range" min="2" max="16" value="6" data-levels />
+          <output data-level-output>6</output>
+        </label>
+        <fieldset>
+          <legend>Output policy</legend>
+          <label><input type="radio" name="policy" value="copy" checked /> Copy output</label>
+          <label><input type="radio" name="policy" value="view" /> Borrow view</label>
+        </fieldset>
+        <button type="button" data-regenerate>Generate another image</button>
+      </section>
+
+      <section class="canvases">
+        <figure>
+          <figcaption><span>01</span> JavaScript source</figcaption>
+          <canvas width="640" height="400" data-source></canvas>
+        </figure>
+        <figure>
+          <figcaption><span>02</span> Processed output</figcaption>
+          <canvas width="640" height="400" data-output></canvas>
+        </figure>
+      </section>
+
+      <section class="trace" aria-label="Boundary operations">
+        <article><span>1</span><strong data-byte-count>1,024,000 bytes</strong><small>allocate</small></article>
+        <i>→</i>
+        <article><span>2</span><strong>HEAPU8.set</strong><small>copy in</small></article>
+        <i>→</i>
+        <article><span>3</span><strong>_posterize</strong><small>one call</small></article>
+        <i>→</i>
+        <article><span>4</span><strong data-output-policy>slice</strong><small data-output-detail>copy out</small></article>
+        <i>→</i>
+        <article><span>5</span><strong>_free</strong><small>release</small></article>
+      </section>
+
+      <footer>
+        <p><span data-duration>0.00 ms</span> bridge + kernel, one local run, not a benchmark</p>
+        <p data-status>Loading the optional Wasm build.</p>
+      </footer>
+    </main>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

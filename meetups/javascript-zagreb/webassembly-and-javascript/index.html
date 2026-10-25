@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0d0816" />
+    <title>WebAssembly and JavaScript · JavaScript Zagreb</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="deck" aria-live="polite">
+      <section class="slide slide--title is-active" data-title="WebAssembly and JavaScript" data-section="Start">
+        <div class="title-mark" aria-hidden="true"><span>JS</span><i>×</i><span>WASM</span></div>
+        <div class="eyebrow">JavaScript Zagreb · [event date]</div>
+        <h1>WebAssembly<br />and JavaScript</h1>
+        <p class="lede">From asm.js to practical C++ interop.</p>
+        <footer>
+          <span>[Your name]</span>
+          <span>[role / handle]</span>
+        </footer>
+        <aside class="speaker-note">
+          Open plainly. Explain why WebAssembly exists, then spend the second half on the boundary where most integration work happens.
+        </aside>
+      </section>
+
+      <section class="slide slide--lab" data-title="One number, three answers" data-section="The number problem">
+        <div class="eyebrow">Before the history · audience vote</div>
+        <h2>One number.<br />Three answers.</h2>
+        <div class="number-lab" data-number-lab>
+          <div class="number-lab__input">
+            <label for="number-input">Start with</label>
+            <input id="number-input" value="4294967295" inputmode="numeric" autocomplete="off" />
+            <div class="preset-row" aria-label="Example values">
+              <button type="button" data-number="4294967295">0xffffffff</button>
+              <button type="button" data-number="2147483647">i32 max</button>
+              <button type="button" data-number="9007199254740992">2^53</button>
+            </div>
+          </div>
+          <div class="answer-grid" aria-live="polite">
+            <article><span>JavaScript Number</span><strong data-number-result>4294967295</strong></article>
+            <article><span>JavaScript <code>| 0</code></span><strong data-int32-result>-1</strong></article>
+            <article><span>Wasm <code>i32</code> identity</span><strong data-wasm-result>-1</strong></article>
+          </div>
+        </div>
+        <p class="caption">The bits did not change. The contract did.</p>
+        <aside class="speaker-note">
+          Ask which answer is real before touching the buttons. Use 0xffffffff first. The Wasm lane is a real instantiated module embedded as 37 bytes in slides.js.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="The plan" data-section="The number problem">
+        <div class="eyebrow">What we are here to learn</div>
+        <h2>History first.<br />Pointers later.</h2>
+        <ol class="route">
+          <li><span>01</span><p>Why JavaScript's numeric model made compiled code awkward.</p></li>
+          <li><span>02</span><p>How Emscripten, asm.js, and WebAssembly connect.</p></li>
+          <li><span>03</span><p>What numbers, strings, arrays, and objects become at the C++ boundary.</p></li>
+          <li><span>04</span><p>How to ship a small useful module without guessing about memory.</p></li>
+        </ol>
+        <aside class="speaker-note">
+          Promise a practical ending. The history exists to explain the current programming model, not to fill a timeline.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="JavaScript integers" data-section="The number problem">
+        <div class="eyebrow">Say this precisely</div>
+        <h2>JavaScript has integer values.</h2>
+        <p class="correction">It historically had no distinct, general-purpose integer numeric type.</p>
+        <div class="contract-row">
+          <article><code>Number</code><span>binary64 values</span><small>exact integers through 2<sup>53</sup> − 1</small></article>
+          <article><code>bitwise</code><span>32-bit operations</span><small>coerce with ToInt32 or ToUint32</small></article>
+          <article><code>TypedArray</code><span>fixed-width storage</span><small>the array, not the variable, owns the width</small></article>
+          <article><code>BigInt</code><span>integer numeric type</span><small>arbitrary precision, added much later</small></article>
+        </div>
+        <a class="source" href="https://tc39.es/ecma262/2026/multipage/numbers-and-dates.html#sec-number.max_safe_integer">ECMAScript Number specification</a>
+        <aside class="speaker-note">
+          Do not repeat the common claim that JavaScript cannot represent integers. The missing feature was an explicit machine-width arithmetic contract.
+        </aside>
+      </section>
+
+      <section class="slide slide--code-focus" data-title="The safe integer cliff" data-section="The number problem">
+        <div class="eyebrow">A different kind of overflow</div>
+        <h2>Two integers become one Number.</h2>
+        <pre class="code-card"><code><span class="token-keyword">const</span> max = Number.MAX_SAFE_INTEGER;
+
+max + <span class="token-number">1</span>  <span class="token-comment">// 9007199254740992</span>
+max + <span class="token-number">2</span>  <span class="token-comment">// 9007199254740992</span>
+
+(max + <span class="token-number">1</span>) === (max + <span class="token-number">2</span>)  <span class="token-comment">// true</span></code></pre>
+        <p class="caption">This is precision loss at 53 bits. It is not 32-bit wraparound.</p>
+        <aside class="speaker-note">
+          Keep the two problems separate. Safe integer precision and fixed-width machine overflow are related to the talk, but they have different semantics.
+        </aside>
+      </section>
+
+      <section class="slide slide--symbol" data-title="The bitwise door" data-section="The number problem">
+        <div class="eyebrow">A tiny operator with a second job</div>
+        <div class="giant-symbol" aria-hidden="true">|0</div>
+        <div class="symbol-copy">
+          <h2>Bitwise OR became a type annotation.</h2>
+          <pre><code><span class="token-number">3.9</span> | <span class="token-number">0</span>          <span class="token-comment">// 3</span>
+<span class="token-number">0xffffffff</span> | <span class="token-number">0</span>   <span class="token-comment">// -1</span>
+(x + y) | <span class="token-number">0</span>     <span class="token-comment">// wrap to i32</span></code></pre>
+        </div>
+        <a class="source" href="https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-toint32">ECMAScript ToInt32</a>
+        <aside class="speaker-note">
+          ToInt32 truncates, reduces modulo 2^32, and interprets the high half as negative. This existing behavior gave compiler authors an opening.
+        </aside>
+      </section>
+
+      <section class="slide slide--timeline" data-title="A short history" data-section="How we got Wasm">
+        <div class="eyebrow">The road to an explicit contract</div>
+        <h2>A short history</h2>
+        <div class="timeline">
+          <article><time>2010</time><strong>Emscripten</strong><span>C and C++ start targeting JavaScript.</span></article>
+          <article><time>2013</time><strong>asm.js</strong><span>Firefox 22 optimizes a strict JS subset.</span></article>
+          <article><time>2015</time><strong>WebAssembly</strong><span>Four browser engines begin a shared design.</span></article>
+          <article><time>2017</time><strong>Ships</strong><span>Wasm arrives on by default across browsers.</span></article>
+          <article><time>2019</time><strong>W3C</strong><span>WebAssembly 1.0 becomes a Recommendation.</span></article>
+        </div>
+        <aside class="speaker-note">
+          Spend about ninety seconds here. Each date should answer what problem changed, not become a trivia quiz.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="Emscripten before Wasm" data-section="How we got Wasm">
+        <div class="eyebrow">2010 · Emscripten before WebAssembly</div>
+        <h2>The target was JavaScript.</h2>
+        <div class="pipeline" role="img" aria-label="C and C++ compile through Clang and LLVM, then Emscripten emits JavaScript">
+          <div><strong>C / C++</strong><small>existing code</small></div>
+          <i>→</i>
+          <div><strong>Clang</strong><small>front end</small></div>
+          <i>→</i>
+          <div><strong>LLVM IR</strong><small>compiler form</small></div>
+          <i>→</i>
+          <div class="pipeline__hot"><strong>Emscripten</strong><small>rebuild control flow</small></div>
+          <i>→</i>
+          <div class="pipeline__js"><strong>JavaScript</strong><small>browser target</small></div>
+        </div>
+        <p class="big-copy">The compiler had to express low-level rules in a high-level language that never promised them.</p>
+        <a class="source" href="https://emscripten.org/docs/introducing_emscripten/Talks-and-Publications.html">Emscripten publication index</a>
+        <aside class="speaker-note">
+          Emscripten began before WebAssembly existed. Its original work included reconstructing structured control flow from LLVM and representing a native-style heap inside JavaScript.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="What C++ expected" data-section="How we got Wasm">
+        <div class="eyebrow">The source language brought expectations</div>
+        <h2>C++ wanted contracts.</h2>
+        <div class="expectation-grid">
+          <article><span class="hex">ff ff ff ff</span><strong>Fixed-width values</strong><p>`uint32_t` must wrap the same way every time.</p></article>
+          <article><span class="hex">00 01 02 03</span><strong>Contiguous memory</strong><p>A pointer means an offset into bytes.</p></article>
+          <article><span class="hex">call 0x2a</span><strong>Functions and control flow</strong><p>The compiler needs cheap calls, loops, and branches.</p></article>
+          <article><span class="hex">same input</span><strong>Portable behavior</strong><p>The result should not depend on the visitor's CPU.</p></article>
+        </div>
+        <aside class="speaker-note">
+          Avoid implying C++ itself is perfectly deterministic. The compiler needs a clear target for the defined parts of the source program.
+        </aside>
+      </section>
+
+      <section class="slide slide--code-focus" data-title="Read asm.js" data-section="How we got Wasm">
+        <div class="eyebrow">Can you read the compiler's accent?</div>
+        <h2>Valid JavaScript. Hidden types.</h2>
+        <pre class="code-card code-card--annotated"><code><span class="token-keyword">function</span> <span class="token-name">add1</span>(x) {
+  x = x | <span class="token-number">0</span>;          <mark data-callout="parameter: i32"> </mark>
+  <span class="token-keyword">return</span> (x + <span class="token-number">1</span>) | <span class="token-number">0</span>; <mark data-callout="result: i32"> </mark>
+}</code></pre>
+        <p class="caption">To a normal JS engine these are coercions. To an asm.js validator they are type declarations.</p>
+        <a class="source" href="https://asmjs.org/spec/latest/">asm.js specification</a>
+        <aside class="speaker-note">
+          Reveal the two annotations. `x | 0` makes the parameter's type visible at function entry. The result coercion keeps two's-complement 32-bit addition.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="The asm.js contract" data-section="How we got Wasm">
+        <div class="eyebrow">Why this generated code mattered</div>
+        <h2>The asm.js contract</h2>
+        <div class="ledger">
+          <div>
+            <h3>Compiler promises</h3>
+            <ul>
+              <li>restricted JavaScript syntax</li>
+              <li>visible types and coercions</li>
+              <li>one typed-array heap</li>
+              <li>predictable calls</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Engine can do</h3>
+            <ul>
+              <li>validate at parse time</li>
+              <li>compile ahead of execution</li>
+              <li>keep values unboxed</li>
+              <li>skip repeated type checks</li>
+            </ul>
+          </div>
+        </div>
+        <p class="caption">If validation fails, it is still JavaScript and can run through the ordinary engine.</p>
+        <aside class="speaker-note">
+          Compatibility was the clever part. asm.js was generated code with a fast path, not a style people were expected to write by hand.
+        </aside>
+      </section>
+
+      <section class="slide slide--quote" data-title="It worked" data-section="How we got Wasm">
+        <div class="eyebrow">2013 · not a toy compiler</div>
+        <blockquote>
+          <strong>1,000,000+</strong>
+          <span>lines of Unreal Engine 3 C++ brought to the web</span>
+          <strong>4 days</strong>
+          <span>reported porting time</span>
+        </blockquote>
+        <p class="caption">The lesson is code reuse and portability, not a universal speed ratio.</p>
+        <a class="source" href="https://blog.mozilla.org/mbest/2013/06/25/asm-js-its-really-fast-backwards-compatible-and-now-in-the-release-version-of-firefox/">Mozilla, Firefox 22 and asm.js</a>
+        <aside class="speaker-note">
+          This is the proof point that earns the history. Mozilla's account says the port covered over a million lines and took four days.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="Why not stop at asm.js" data-section="How we got Wasm">
+        <div class="eyebrow">The compatibility approach became a constraint</div>
+        <h2>Why not stop at asm.js?</h2>
+        <div class="obstacle-list">
+          <article><span>01</span><p>Browsers still parse a large JavaScript source file.</p></article>
+          <article><span>02</span><p>Machine types hide inside punctuation and library calls.</p></article>
+          <article><span>03</span><p>New low-level features must also make sense as JavaScript.</p></article>
+          <article><span>04</span><p>The format was built for one use case inside another language.</p></article>
+        </div>
+        <aside class="speaker-note">
+          The WebAssembly rationale cited much faster decoding and smaller compressed output in prototypes. Treat those figures as historical design evidence, not a current benchmark.
+        </aside>
+      </section>
+
+      <section class="slide slide--announcement" data-title="WebAssembly announced" data-section="WebAssembly">
+        <div class="eyebrow">17 June 2015</div>
+        <h2>Make the machine contract explicit.</h2>
+        <div class="browser-row" aria-label="Browser engine collaborators">
+          <span>Mozilla</span><span>Chromium</span><span>Edge</span><span>WebKit</span>
+        </div>
+        <p class="big-copy">A shared, portable compilation target built to work with the web platform and JavaScript.</p>
+        <a class="source" href="https://blog.mozilla.org/luke/2015/06/17/webassembly/">Original WebAssembly announcement</a>
+        <aside class="speaker-note">
+          The original announcement called Wasm the next evolutionary step from asm.js. Existing Emscripten users were expected to switch targets rather than rewrite their programs.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="What WebAssembly is" data-section="WebAssembly">
+        <div class="eyebrow">A useful definition</div>
+        <h2>WebAssembly is a typed instruction format.</h2>
+        <div class="definition-grid">
+          <article><strong>Portable</strong><p>The same module targets different CPUs and hosts.</p></article>
+          <article><strong>Compact</strong><p>A binary encoding is designed for transport and decoding.</p></article>
+          <article><strong>Validated</strong><p>Types, control flow, and indices are checked before execution.</p></article>
+          <article><strong>Sandboxed</strong><p>Linear-memory access is bounds-checked by the runtime.</p></article>
+        </div>
+        <p class="correction">It is not the visitor's native assembly, and it is not a JavaScript replacement.</p>
+        <a class="source" href="https://github.com/WebAssembly/design/blob/main/HighLevelGoals.md">WebAssembly high-level goals</a>
+        <aside class="speaker-note">
+          "Typed instruction format" is more useful than "assembly for the web." The host compiles or interprets it and controls its capabilities.
+        </aside>
+      </section>
+
+      <section class="slide slide--triptych" data-title="One function, three forms" data-section="WebAssembly">
+        <div class="eyebrow">The punctuation gets a real type</div>
+        <h2>One function, three forms</h2>
+        <div class="code-triptych">
+          <article><span>C++</span><pre><code><span class="token-name">uint32_t</span> add(
+  uint32_t a,
+  uint32_t b
+) {
+  <span class="token-keyword">return</span> a + b;
+}</code></pre></article>
+          <article><span>asm.js</span><pre><code><span class="token-keyword">function</span> add(a, b) {
+  a = a | <span class="token-number">0</span>;
+  b = b | <span class="token-number">0</span>;
+  <span class="token-keyword">return</span> (a+b)|<span class="token-number">0</span>;
+}</code></pre></article>
+          <article class="code-triptych__hot"><span>WebAssembly text</span><pre><code>(<span class="token-name">func</span> (<span class="token-name">param</span> i32 i32)
+      (<span class="token-name">result</span> i32)
+  local.get <span class="token-number">0</span>
+  local.get <span class="token-number">1</span>
+  i32.add)</code></pre></article>
+        </div>
+        <aside class="speaker-note">
+          This is the central reveal. WebAssembly does not infer i32 from an idiom. The type and operation are part of the module.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="The stack machine" data-section="WebAssembly">
+        <div class="eyebrow">Read four Wasm instructions</div>
+        <h2>A small typed stack machine</h2>
+        <div class="stack-demo" data-stack-demo>
+          <div class="instructions">
+            <button type="button" data-stack-step="0">local.get 0</button>
+            <button type="button" data-stack-step="1">local.get 1</button>
+            <button type="button" data-stack-step="2">i32.add</button>
+            <button type="button" data-stack-step="3">end</button>
+          </div>
+          <div class="stack" aria-live="polite">
+            <span>value stack</span>
+            <div data-stack-values><i>empty</i></div>
+          </div>
+          <p data-stack-caption>Click the first instruction.</p>
+        </div>
+        <a class="source" href="https://github.com/WebAssembly/design/blob/main/Rationale.md">WebAssembly design rationale</a>
+        <aside class="speaker-note">
+          Click through quickly. Structured stack code is compact and can be validated in one pass. The engine then maps it to its internal representation and machine code.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="JavaScript hosts Wasm" data-section="WebAssembly">
+        <div class="eyebrow">A division of labor</div>
+        <h2>JavaScript hosts the module.</h2>
+        <div class="host-layout">
+          <div class="host-layout__js">
+            <span>JavaScript</span>
+            <ul><li>DOM and UI</li><li>network requests</li><li>events and frameworks</li><li>module loading</li></ul>
+          </div>
+          <div class="host-layout__bridge"><span>imports</span><i>⇄</i><span>exports</span></div>
+          <div class="host-layout__wasm">
+            <span>WebAssembly</span>
+            <ul><li>compiled kernels</li><li>existing native libraries</li><li>predictable numeric work</li><li>linear-memory data</li></ul>
+          </div>
+        </div>
+        <p class="caption">Wasm gets browser capabilities through its host. A core module has no direct DOM API.</p>
+        <aside class="speaker-note">
+          The design goal is synchronous calls in both directions. Most web applications should keep web orchestration in JavaScript and move bounded work into compiled modules.
+        </aside>
+      </section>
+
+      <section class="slide slide--worlds" data-title="Two memory worlds" data-section="The boundary">
+        <div class="eyebrow">The mental model that prevents bugs</div>
+        <h2>Two memory worlds</h2>
+        <div class="worlds">
+          <div class="world world--js">
+            <strong>JavaScript heap</strong>
+            <span>objects</span><span>strings</span><span>arrays</span><span>DOM nodes</span>
+            <small>garbage collected</small>
+          </div>
+          <div class="border-gate">
+            <i>values</i><i>copies</i><i>views</i><i>handles</i>
+          </div>
+          <div class="world world--wasm">
+            <strong>Wasm linear memory</strong>
+            <span>00</span><span>7f</span><span>2a</span><span>ff</span>
+            <small>bytes at numeric offsets</small>
+          </div>
+        </div>
+        <p class="correction">Bindings make the gate convenient. They do not remove it.</p>
+        <aside class="speaker-note">
+          Modern Wasm has reference types, but Emscripten's C++ data still mainly lives in linear memory. Use this model for the rest of the talk.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="Scalar ABI" data-section="The boundary">
+        <div class="eyebrow">What crosses a direct call</div>
+        <h2>The scalar ABI</h2>
+        <div class="type-table" role="table" aria-label="WebAssembly and JavaScript value mapping">
+          <div class="type-table__head" role="row"><span>Wasm / C++</span><span>JavaScript</span><span>Watch for</span></div>
+          <div role="row"><code>i32 / int32_t</code><span>Number</span><small>low 32 bits, signed result</small></div>
+          <div role="row"><code>i64 / int64_t</code><span>BigInt</span><small>Number is the wrong type</small></div>
+          <div role="row"><code>f32 / float</code><span>Number</span><small>rounding to 32-bit float</small></div>
+          <div role="row"><code>f64 / double</code><span>Number</span><small>closest direct match</small></div>
+          <div role="row"><code>T* in wasm32</code><span>Number</span><small>offset, not a JS object</small></div>
+        </div>
+        <a class="source" href="https://webassembly.github.io/spec/js-api/">WebAssembly JavaScript interface</a>
+        <aside class="speaker-note">
+          Wasm integer bits have no inherent signedness. A signed operation or the JS result conversion supplies that interpretation. Emscripten currently uses BigInt integration for i64 by default.
+        </aside>
+      </section>
+
+      <section class="slide slide--transform" data-title="Strings are a protocol" data-section="The boundary">
+        <div class="eyebrow">A JavaScript string cannot be a C char pointer</div>
+        <h2>Strings are a protocol.</h2>
+        <div class="transform-line">
+          <div><strong>"Bok"</strong><small>JS string</small></div><i>→</i>
+          <div><strong>TextEncoder</strong><small>UTF-8</small></div><i>→</i>
+          <div><strong>42</strong><small>malloc pointer</small></div><i>+</i>
+          <div><strong>3</strong><small>byte length</small></div><i>→</i>
+          <div><strong>42 6f 6b</strong><small>linear memory</small></div>
+        </div>
+        <div class="question-row">
+          <span>Who allocates?</span><span>Who frees?</span><span>Can C++ retain it?</span><span>Is the length bytes or characters?</span>
+        </div>
+        <p class="caption">Embind and wasm-bindgen automate this work. The bytes still move.</p>
+        <aside class="speaker-note">
+          JavaScript typically stores text as UTF-16 code units while C++ libraries often expect UTF-8 bytes. Ask these four questions whenever text crosses.
+        </aside>
+      </section>
+
+      <section class="slide slide--demo-pitch" data-title="The photo demo" data-section="The boundary">
+        <div class="eyebrow">Main demo · one buffer, one call</div>
+        <h2>Posterize a picture in C++</h2>
+        <div class="pixel-preview" data-pixel-preview aria-label="Generated colorful pixel pattern"></div>
+        <div class="demo-flow">
+          <span>Canvas RGBA</span><i>→</i><span>copy to Wasm</span><i>→</i><span>C++ mutates</span><i>→</i><span>paint result</span>
+        </div>
+        <a class="demo-link" href="demos/pixel-lab/" target="_blank" rel="noreferrer">Open the pixel lab ↗</a>
+        <aside class="speaker-note">
+          Open the separate demo. It works offline with a JS fallback and switches to C++/Wasm automatically after the kernel is built.
+        </aside>
+      </section>
+
+      <section class="slide slide--code-focus" data-title="The C++ kernel" data-section="The boundary">
+        <div class="eyebrow">C++ · deliberately boring</div>
+        <h2>Mutate bytes in place.</h2>
+        <pre class="code-card"><code><span class="token-keyword">extern</span> <span class="token-string">"C"</span> EMSCRIPTEN_KEEPALIVE
+<span class="token-keyword">void</span> posterize(<span class="token-name">uint8_t</span>* pixels,
+               <span class="token-name">size_t</span> length,
+               <span class="token-name">uint8_t</span> levels) {
+  <span class="token-keyword">for</span> (size_t i = <span class="token-number">0</span>; i + <span class="token-number">3</span> &lt; length; i += <span class="token-number">4</span>) {
+    pixels[i]     = quantize(pixels[i], levels);
+    pixels[i + <span class="token-number">1</span>] = quantize(pixels[i + <span class="token-number">1</span>], levels);
+    pixels[i + <span class="token-number">2</span>] = quantize(pixels[i + <span class="token-number">2</span>], levels);
+  }
+}</code></pre>
+        <p class="caption">The alpha byte stays untouched. The boundary contract is pointer, byte length, and levels.</p>
+        <aside class="speaker-note">
+          Do not sell the loop as advanced C++. Its simplicity lets the room account for all the data movement.
+        </aside>
+      </section>
+
+      <section class="slide slide--code-focus" data-title="The JavaScript call" data-section="The boundary">
+        <div class="eyebrow">JavaScript · account for every byte</div>
+        <h2>Allocate. Copy. Call. Copy. Free.</h2>
+        <pre class="code-card"><code><span class="token-keyword">const</span> ptr = Module._malloc(rgba.byteLength);
+
+<span class="token-keyword">try</span> {
+  Module.HEAPU8.set(rgba, ptr);                  <span class="token-comment">// copy in</span>
+  Module._posterize(ptr, rgba.byteLength, <span class="token-number">6</span>); <span class="token-comment">// one call</span>
+
+  <span class="token-keyword">const</span> out = Module.HEAPU8.slice(
+    ptr, ptr + rgba.byteLength
+  );                                             <span class="token-comment">// copy out</span>
+} <span class="token-keyword">finally</span> {
+  Module._free(ptr);                             <span class="token-comment">// owner frees</span>
+}</code></pre>
+        <aside class="speaker-note">
+          Say the verbs in the title as each line appears. `slice` is intentional because the result must survive `_free`.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="Copy or view" data-section="The boundary">
+        <div class="eyebrow">One API choice changes lifetime</div>
+        <h2>Copy or view?</h2>
+        <div class="comparison">
+          <article>
+            <code>HEAPU8.slice(start, end)</code>
+            <strong>Independent copy</strong>
+            <ul><li>cost grows with buffer size</li><li>safe after `_free`</li><li>safe after memory growth</li></ul>
+          </article>
+          <article class="comparison__hot">
+            <code>HEAPU8.subarray(start, end)</code>
+            <strong>Shared view</strong>
+            <ul><li>cheap to create</li><li>invalid after free</li><li>may detach after memory growth</li></ul>
+          </article>
+        </div>
+        <p class="correction">"Zero-copy" is a lifetime promise, not a free speed sticker.</p>
+        <aside class="speaker-note">
+          A view is useful when the consumer can finish before mutation, deallocation, reallocation, or memory growth. Otherwise copy deliberately.
+        </aside>
+      </section>
+
+      <section class="slide slide--warning" data-title="Memory growth" data-section="The boundary">
+        <div class="eyebrow">A bug that looks impossible</div>
+        <h2>Memory grew.<br />Your old view did not.</h2>
+        <pre class="code-card"><code><span class="token-keyword">let</span> view = Module.HEAPU8.subarray(ptr, ptr + length);
+
+Module._operation_that_might_allocate();
+
+<span class="token-comment">// Refresh after a possible WebAssembly.Memory growth.</span>
+view = Module.HEAPU8.subarray(ptr, ptr + length);</code></pre>
+        <p class="caption">Emscripten refreshes its canonical HEAP views. It cannot refresh the views you already captured.</p>
+        <a class="source" href="https://emscripten.org/docs/porting/connecting_cpp_and_javascript/Interacting-with-code.html#access-memory-from-javascript">Emscripten memory access guide</a>
+        <aside class="speaker-note">
+          This matters when ALLOW_MEMORY_GROWTH is enabled. A growth can replace the backing ArrayBuffer. Recreate derived views after calls that may allocate.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="The call budget" data-section="The boundary">
+        <div class="eyebrow">Performance advice without a fake benchmark</div>
+        <h2>Send buffers, not pixels.</h2>
+        <div class="call-budget">
+          <div class="call-budget__bad">
+            <strong>2,073,600 calls</strong>
+            <span>one 1080p image, one call per pixel</span>
+            <div aria-hidden="true"></div>
+          </div>
+          <div class="call-budget__good">
+            <strong>1 call</strong>
+            <span>pointer + length + operation</span>
+            <div aria-hidden="true"></div>
+          </div>
+        </div>
+        <p class="correction">Give each crossing enough work to pay for itself.</p>
+        <aside class="speaker-note">
+          Boundary overhead changes across engines and binding layers. The stable advice is architectural: batch work and measure the whole path, including copies.
+        </aside>
+      </section>
+
+      <section class="slide slide--code-focus" data-title="Embind" data-section="Binding C++">
+        <div class="eyebrow">When the public API follows C++ classes</div>
+        <h2>Embind generates a JavaScript wrapper.</h2>
+        <pre class="code-card"><code><span class="token-name">EMSCRIPTEN_BINDINGS</span>(palette_api) {
+  emscripten::<span class="token-name">class_</span>&lt;Palette&gt;(<span class="token-string">"Palette"</span>)
+    .constructor&lt;&gt;()
+    .function(<span class="token-string">"add"</span>, &amp;Palette::add)
+    .function(<span class="token-string">"dominantChannel"</span>,
+              &amp;Palette::dominantChannel);
+}</code></pre>
+        <div class="api-result"><code>const p = new Module.Palette();</code><span>looks like JavaScript</span></div>
+        <a class="source" href="https://emscripten.org/docs/porting/connecting_cpp_and_javascript/embind.html">Embind documentation</a>
+        <aside class="speaker-note">
+          Embind supports functions, classes, value types, smart pointers, and containers. It generates glue and costs code size and call work, so use it where API ergonomics matters.
+        </aside>
+      </section>
+
+      <section class="slide slide--reveal" data-title="Ownership" data-section="Binding C++">
+        <div class="eyebrow">The wrapper did not merge the heaps</div>
+        <h2>Who destroys the C++ object?</h2>
+        <pre class="code-card"><code><span class="token-keyword">const</span> palette = <span class="token-keyword">new</span> Module.Palette();
+
+<span class="token-keyword">try</span> {
+  palette.add(<span class="token-number">240</span>, <span class="token-number">30</span>, <span class="token-number">80</span>);
+  console.log(palette.dominantChannel());
+} <span class="token-keyword">finally</span> {
+  palette.delete(); <span class="token-comment">// deterministic C++ cleanup</span>
+}</code></pre>
+        <div class="ownership-rule">If JavaScript receives a C++ handle, document who calls <code>delete()</code>.</div>
+        <aside class="speaker-note">
+          FinalizationRegistry is not deterministic. Current Embind can integrate with the explicit resource management `using` syntax where supported, but the ownership question remains.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="C++ calls JavaScript" data-section="Binding C++">
+        <div class="eyebrow">Calls go both ways</div>
+        <h2>C++ can hold a JavaScript value.</h2>
+        <pre class="code-card"><code><span class="token-keyword">using</span> emscripten::val;
+
+<span class="token-keyword">void</span> announce(<span class="token-keyword">const</span> std::string&amp; message) {
+  val::<span class="token-name">global</span>(<span class="token-string">"console"</span>)
+    .call&lt;<span class="token-keyword">void</span>&gt;(<span class="token-string">"log"</span>, message);
+}</code></pre>
+        <div class="tool-row">
+          <article><code>emscripten::val</code><span>objects, properties, calls</span></article>
+          <article><code>EM_JS</code><span>a named JS function beside C++</span></article>
+          <article><code>--js-library</code><span>a larger imported C API</span></article>
+        </div>
+        <p class="caption">Keep DOM and framework orchestration in JavaScript unless moving it earns something measurable.</p>
+        <aside class="speaker-note">
+          Each reverse call is still a boundary call. `val` is expressive, but it can hide representation and call costs if used everywhere.
+        </aside>
+      </section>
+
+      <section class="slide slide--rust" data-title="Rust comparison" data-section="Binding C++">
+        <div class="eyebrow">A different language, the same border</div>
+        <h2>Rust improves source-level safety.<br />Data still crosses the boundary.</h2>
+        <div class="split-code">
+          <pre><code><span class="token-meta">#[wasm_bindgen]</span>
+<span class="token-keyword">pub fn</span> greet(name: &amp;<span class="token-name">str</span>) -&gt; String {
+  format!(<span class="token-string">"Hello, {name}"</span>)
+}</code></pre>
+          <div class="hidden-work">
+            <span>UTF-8 encode</span><i>→</i><span>allocate</span><i>→</i><span>pointer + length</span><i>→</i><span>decode</span><i>→</i><span>free</span>
+          </div>
+        </div>
+        <p class="caption"><code>wasm-bindgen</code> writes the glue. Strings still cross between two representations.</p>
+        <a class="source" href="https://rustwasm.github.io/docs/wasm-bindgen/reference/types/string.html">wasm-bindgen string reference</a>
+        <aside class="speaker-note">
+          Keep this to one minute. Rust gives strong source-level memory safety. This comparison reinforces that good bindings automate a protocol rather than abolish it.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="Choose an interop layer" data-section="Practical guide">
+        <div class="eyebrow">Use the simplest bridge that fits</div>
+        <h2>Choose an interop layer</h2>
+        <div class="choice-table">
+          <div><strong>A few stable functions</strong><code>extern "C"</code><span>raw exports</span></div>
+          <div><strong>Simple converted calls</strong><code>ccall / cwrap</code><span>numbers and strings</span></div>
+          <div><strong>C++ classes as a JS API</strong><code>Embind</code><span>generated wrappers</span></div>
+          <div><strong>C++ calling browser code</strong><code>val / EM_JS</code><span>reverse calls</span></div>
+          <div class="choice-table__hot"><strong>Large numeric data</strong><code>pointer + length</code><span>explicit memory</span></div>
+        </div>
+        <aside class="speaker-note">
+          Raw C ABI is often the best long-lived boundary even when the implementation is C++. Add convenience on the JavaScript side instead of exposing every class by default.
+        </aside>
+      </section>
+
+      <section class="slide slide--code-focus" data-title="Build recipe" data-section="Practical guide">
+        <div class="eyebrow">A small modern build</div>
+        <h2>Compile one module.</h2>
+        <pre class="code-card code-card--shell"><code>em++ pixel_lab.cpp -O3 \
+  -sMODULARIZE \
+  -sEXPORT_ES6 \
+  -sENVIRONMENT=web \
+  -sEXPORTED_FUNCTIONS=_malloc,_free,_posterize \
+  -sFILESYSTEM=0 \
+  -o pixel_lab.mjs</code></pre>
+        <pre class="mini-code"><code><span class="token-keyword">import</span> createModule <span class="token-keyword">from</span> <span class="token-string">"./pixel_lab.mjs"</span>;
+<span class="token-keyword">const</span> Module = <span class="token-keyword">await</span> createModule();</code></pre>
+        <p class="caption">Serve `.wasm` as `application/wasm`. Await the module factory before calling exports.</p>
+        <a class="source" href="https://emscripten.org/docs/compiling/Modularized-Output.html">Emscripten modularized output</a>
+        <aside class="speaker-note">
+          Use debug flags during development, then optimize and measure release output. The demo README includes both commands.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="Debug and verify" data-section="Practical guide">
+        <div class="eyebrow">Before the benchmark</div>
+        <h2>Make the boundary observable.</h2>
+        <ol class="checklist">
+          <li><span>01</span><p>Test edge values at each numeric conversion.</p></li>
+          <li><span>02</span><p>Count bytes copied and calls made per user action.</p></li>
+          <li><span>03</span><p>Write ownership beside each pointer and handle.</p></li>
+          <li><span>04</span><p>Exercise memory growth and stale-view paths.</p></li>
+          <li><span>05</span><p>Measure startup, transfer, compute, and paint separately.</p></li>
+        </ol>
+        <aside class="speaker-note">
+          This is the practical guide condensed into a code review checklist. A kernel-only microbenchmark misses most browser integration failures.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="When to use Wasm" data-section="Practical guide">
+        <div class="eyebrow">Use WebAssembly where it fits</div>
+        <h2>Use it when it earns the boundary.</h2>
+        <div class="comparison comparison--decision">
+          <article class="comparison__hot">
+            <h3>Good fit</h3>
+            <ul>
+              <li>valuable C, C++, or Rust library</li>
+              <li>large numeric or media kernels</li>
+              <li>portable sandboxed computation</li>
+              <li>data can stay in linear memory</li>
+            </ul>
+          </article>
+          <article>
+            <h3>Keep it in JavaScript</h3>
+            <ul>
+              <li>DOM-heavy application logic</li>
+              <li>small work with chatty calls</li>
+              <li>objects constantly cross the boundary</li>
+              <li>no measured user-facing problem</li>
+            </ul>
+          </article>
+        </div>
+        <aside class="speaker-note">
+          Existing libraries and coherent compute kernels are the strongest web use cases. A normal business form is not waiting for a C++ rewrite.
+        </aside>
+      </section>
+
+      <section class="slide slide--takeaways" data-title="Takeaways" data-section="Finish">
+        <div class="eyebrow">Keep these four contracts</div>
+        <h2>Types. Bytes.<br />Owners. Time.</h2>
+        <div class="takeaway-grid">
+          <article><span>01</span><strong>Types</strong><p>Know the conversion at every function edge.</p></article>
+          <article><span>02</span><strong>Bytes</strong><p>Count copies and batch the work.</p></article>
+          <article><span>03</span><strong>Owners</strong><p>Name who frees each allocation and handle.</p></article>
+          <article><span>04</span><strong>Time</strong><p>State how long every pointer and view stays valid.</p></article>
+        </div>
+        <p class="closing-line">WebAssembly made the machine contract explicit. Good interop makes the data contract explicit too.</p>
+        <aside class="speaker-note">
+          Return to the opening. The integer had different answers because each context supplied a different contract. The same is true for every object crossing the boundary.
+        </aside>
+      </section>
+
+      <section class="slide slide--end" data-title="Questions" data-section="Finish">
+        <div class="eyebrow">JavaScript Zagreb</div>
+        <h2>Questions?</h2>
+        <p>Slides, sources, and runnable demos live together.</p>
+        <div class="end-links">
+          <span>[short slide URL]</span>
+          <span>[repository URL]</span>
+        </div>
+        <footer>
+          <span>[Your name]</span>
+          <span>[email / handle]</span>
+        </footer>
+        <aside class="speaker-note">
+          Likely questions: Wasm versus workers, memory64, Component Model, exceptions, threads, SIMD, and how the advice differs for Rust. The research brief has the core answers and sources.
+        </aside>
+      </section>
+    </main>
+
+    <div class="chrome" aria-hidden="true">
+      <div class="section-label" data-section-label>Start</div>
+      <div class="progress"><div class="progress__bar"></div></div>
+    </div>
+    <nav class="controls" aria-label="Slide controls">
+      <button type="button" data-action="previous" aria-label="Previous slide">←</button>
+      <span class="counter"><span data-current>1</span> / <span data-total>37</span></span>
+      <button type="button" data-action="next" aria-label="Next slide">→</button>
+    </nav>
+    <button class="notes-toggle" type="button" data-action="notes" aria-label="Toggle speaker notes">N</button>
+    <div class="speaker-panel" data-speaker-panel aria-live="polite"></div>
+    <div class="hint">Arrows navigate · F fullscreen · N notes</div>
+    <script src="slides.js"></script>
+  </body>
+</html>

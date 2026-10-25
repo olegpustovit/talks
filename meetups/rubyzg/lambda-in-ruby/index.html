@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#12090b" />
+    <title>Lambda in Ruby · RubyConf / RubyZG</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="deck" aria-live="polite">
+      <section class="slide slide--title is-active" data-title="Lambda in Ruby" data-section="Start">
+        <div class="title-mark" aria-hidden="true"><span>λ</span><i>≠</i><span>AWS</span></div>
+        <div class="eyebrow">RubyConf · 30 min · RubyZG</div>
+        <h1>Lambda<br />in Ruby</h1>
+        <p class="lede">Two lambdas, zero Puma.</p>
+        <footer>
+          <span>[Your name]</span>
+          <span>[handle]</span>
+        </footer>
+        <aside class="speaker-note">
+          0:00–2:00. Open on the naming collision, not AWS logos. Promise a story with failures, t-shirts, and adapters that sound fake but are production-tested.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="Two lambdas" data-section="Hook">
+        <div class="eyebrow">0:00 · The hook</div>
+        <h2>Two lambdas.<br />One language.</h2>
+        <pre><code><span class="muted"># Ruby lambda — strict arity</span>
+->(x) { x }.call(1, 2)  <span class="muted"># ArgumentError</span>
+
+<span class="muted"># AWS Lambda — keyword handler</span>
+def lambda_handler(event:, context:)
+  <span class="muted"># ...</span>
+end</code></pre>
+        <p class="caption">Both are contracts about arguments. Only one runs on a t-shirt company's monolith.</p>
+        <aside class="speaker-note">
+          2:00–5:00. AppSignal and Ruby docs acknowledge the naming collision. AWS handler docs recommend keyword args. Quick audience vote: who knew Ruby had lambda? who knew Custom Ink runs Rails on Lambda?
+        </aside>
+      </section>
+
+      <section class="slide" data-title="Custom Ink arc" data-section="Story">
+        <div class="eyebrow">2:00 · Real company, real scars</div>
+        <h2>20 years of Rails.<br />Then Lambda.</h2>
+        <div class="flow-stack">
+          <article><strong>2014</strong><p>Microservices rewrite “failed miserably” — rolled back.</p></article>
+          <article><strong>2017</strong><p>Design-lab images off Rails → Lambda. ~90% cost savings (AWS story).</p></article>
+          <article><strong>2018+</strong><p>Ruby runtime ships. Ken Collins asks: drop whole Rails in?</p></article>
+        </div>
+        <a class="source" href="https://www.serverlesschats.com/32/">Ken Collins · Serverless Chats #32</a>
+        <aside class="speaker-note">
+          Custom Ink: among the longest Rails production shops. Architecture lines drawn by success popping pieces out — not big-bang decomposition. Ken is AWS Serverless Hero; also wrote ActiveRecord SQL Server adapter (one line if time).
+        </aside>
+      </section>
+
+      <section class="slide" data-title="Where is Puma?" data-section="Story">
+        <div class="eyebrow">5:00 · The heresy</div>
+        <h2>Where is<br />Puma?</h2>
+        <p class="big-copy">Lamby’s answer: nowhere. AWS integrations become the web server. Lambda scales by spinning containers, not by threads in one process.</p>
+        <p class="correction">“Several dozen lines of code — one hash into another.” — Ken Collins</p>
+        <aside class="speaker-note">
+          5:00–8:00. Lamby converts ALB/API Gateway/Function URL JSON into Rack env. Rails is no wiser than behind Apache or Nginx. Link to Last Week in AWS #70 for “several dozen lines” quote.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="Day-one Sinatra" data-section="Rack">
+        <div class="eyebrow">5:00 · AWS did this first</div>
+        <h2>Nov 2018:<br />Sinatra on Lambda.</h2>
+        <p class="big-copy">AWS’s Ruby launch blog shipped a Sinatra app bridged by Rack — not hello-world. Lamby industrialized the same pattern for Rails.</p>
+        <a class="source" href="https://aws.amazon.com/blogs/compute/announcing-ruby-support-for-aws-lambda/">AWS Compute Blog · Nov 29, 2018</a>
+        <aside class="speaker-note">
+          8:00–10:00. Show lambda.rb calling Rack::Handler if you have it in notes. The pattern predates Lamby; Custom Ink productized it for monoliths.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="Lamby anatomy" data-section="Rack">
+        <div class="eyebrow">8:00 · No Puma in the image</div>
+        <h2>RIC → Lamby.cmd<br />→ Rails.</h2>
+        <pre><code>ENTRYPOINT ["aws_lambda_ric"]
+CMD ["config/environment.Lamby.cmd"]
+
+<span class="muted"># Gemfile</span>
+gem "lamby"</code></pre>
+        <p class="caption">1792 MB ≈ 1 vCPU sweet spot. HTTP timeout hard cap: 30 seconds.</p>
+        <aside class="speaker-note">
+          10:00–12:00. Trace one Function URL JSON to REQUEST_METHOD and rack.input if demo time. Boot cost is per execution environment, not per request. Pool size ≠ Puma threads.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="ALB not API Gateway" data-section="Rack">
+        <div class="eyebrow">Unusual choice</div>
+        <h2>They picked ALB<br />on purpose.</h2>
+        <p class="big-copy">“I knew I didn't need the features of API Gateway. The only thing we used it for was proxying events.”</p>
+        <p class="caption">Fewer serverless products can mean simpler Rails hosting.</p>
+        <aside class="speaker-note">
+          12:00–13:00. Counter-intuitive beat. API Gateway shines for auth, throttling, REST tooling — but pure HTTP proxy to Rack may not need it.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="No mysql2" data-section="Weird adapters">
+        <div class="eyebrow">12:00 · Wait, what?</div>
+        <h2>ActiveRecord<br />without mysql2.</h2>
+        <pre><code><span class="muted"># database.yml</span>
+adapter: aurora_serverless
+secret_arn: arn:aws:secretsmanager:...
+resource_arn: arn:aws:rds:...:cluster:...</code></pre>
+        <p class="caption">SQL over HTTP via RDS Data API — Custom Ink’s activerecord-aurora-serverless-adapter.</p>
+        <aside class="speaker-note">
+          13:00–16:00. Replace TCP connection pool angst with HTTP + IAM. Latency tradeoff is real. Ken’s pattern: replace the wire, keep ActiveRecord — same move as SQL Server adapter years earlier. Heroku→Lambda blog on Custom Ink tech site.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="Lambdakiq" data-section="Weird adapters">
+        <div class="eyebrow">15:00 · Jobs</div>
+        <h2>Sidekiq polls.<br />SQS pushes.</h2>
+        <pre><code>config.active_job.queue_adapter = :lambdakiq
+
+<span class="muted"># Same container image, different CMD:</span>
+<span class="muted"># web → Lamby.cmd · jobs → Lambdakiq.cmd</span></code></pre>
+        <p class="caption">ReportBatchItemFailures · ~12 retries · dead letters up to 14 days.</p>
+        <aside class="speaker-note">
+          16:00–18:00. Same ApplicationJob classes. You lose Sidekiq Web UI; gain managed scale. One image, two functions — tune memory/timeout separately.
+        </aside>
+      </section>
+
+      <section class="slide slide--warning" data-title="Mega Mode" data-section="Weird adapters">
+        <div class="eyebrow">18:00 · The other fork</div>
+        <h2>Jets Mega Mode:<br />Puma in /tmp.</h2>
+        <p class="big-copy">Ruby on Jets can spawn a Rack subprocess inside Lambda. Rails boots on writable /tmp because the filesystem is otherwise read-only. +1–3 s cold overhead.</p>
+        <p class="caption">Lamby removes the inner server. Mega Mode embeds one. Both shipped real apps.</p>
+        <aside class="speaker-note">
+          18:00–21:00. Jets docs call it “most pragmatic” for migration. Mention prewarming cron (“poor man’s provisioned concurrency”) only if asked — cuts time.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="YJIT after boot" data-section="Performance">
+        <div class="eyebrow">21:00 · Compile budget</div>
+        <h2>Enable YJIT<br />after boot.</h2>
+        <pre><code><span class="muted"># 37signals pattern — also for Lambda</span>
+ENV["RUBYOPT"] = "--yjit-disable --yjit-exec-mem-size=192"
+<span class="muted"># ... Rails boot ...</span>
+RubyVM::YJIT.enable</code></pre>
+        <p class="caption">Ruby 4.0 defaults YJIT ON — but Init phase is not where you want to compile Rails.</p>
+        <aside class="speaker-note">
+          21:00–24:00. Basecamp ~18% faster; ~98% code in YJIT on 3.3+. Zenn benchmark: YJIT ON +~60ms cold, −3ms warm on small handler. X-Ray Init phase = cold-start truth.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="Cold start honesty" data-section="Performance">
+        <div class="eyebrow">24:00 · Numbers</div>
+        <h2>Cold starts<br />are a product feature.</h2>
+        <div class="metric-grid">
+          <article><strong>1–3s+</strong><span>containerized Rails without tuning</span></article>
+          <article><strong>1792</strong><span>MB — Lamby vCPU sweet spot</span></article>
+        </div>
+        <p class="caption">Scale to zero ≠ free latency. Provisioned concurrency buys warmth; Jets prewarm cron buys cheaper warmth.</p>
+        <aside class="speaker-note">
+          24:00–27:00. Do not promise sub-100ms p99 without budget. Container lazy-loading helps large images but first touch still costs.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="Use it when" data-section="Decision">
+        <div class="eyebrow">27:00 · 60-second grid</div>
+        <h2>Use it when…</h2>
+        <ul class="takeaways">
+          <li>Spiky traffic and bounded HTTP + queue shape.</li>
+          <li>You can pop hot paths out first (Custom Ink pattern).</li>
+          <li>IaC + containers are already in your toolchain.</li>
+        </ul>
+        <aside class="speaker-note">
+          Internal APIs, webhooks, catalog/image edges. Steady high QPS → Kamal/Fargate often wins on sanity and bill.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="Skip it when" data-section="Decision">
+        <div class="eyebrow">27:00 · Stay honest</div>
+        <h2>Skip it when…</h2>
+        <ul class="takeaways">
+          <li>WebSockets, &gt;30 s work, or cheap cold p99 on a budget.</li>
+          <li>“Just deploy Rails” is the whole goal.</li>
+          <li>2014-style big-bang microservices is the motivation.</li>
+        </ul>
+        <p class="closing-line">Serverless is a scaling model — not an apology for a monolith.</p>
+        <aside class="speaker-note">
+          Audiences trust skip cases. Custom Ink failed microservices before Lambda succeeded on extracted pieces.
+        </aside>
+      </section>
+
+      <section class="slide" data-title="Takeaways" data-section="Finish">
+        <div class="eyebrow">28:00–30:00</div>
+        <h2>Event · Rack ·<br />Job · Contract.</h2>
+        <div class="takeaway-grid">
+          <article><span>01</span><strong>Event</strong><p>Two lambdas — language strictness meets cloud handlers.</p></article>
+          <article><span>02</span><strong>Rack</strong><p>Hash in, hash out — Lamby is the whole HTTP bridge.</p></article>
+          <article><span>03</span><strong>Job</strong><p>SQS push replaces Redis poll.</p></article>
+          <article><span>04</span><strong>Contract</strong><p>Boot, pools, /tmp, 30 s — read before you port.</p></article>
+        </div>
+        <aside class="speaker-note">
+          Land the plane at 28:00. Leave 2 min buffer. Tie back: Puma is optional because Rack found a new host — after a microservices failure and a 90% image win.
+        </aside>
+      </section>
+
+      <section class="slide slide--end" data-title="Questions" data-section="Finish">
+        <div class="eyebrow">RubyZG · rubyzg.com</div>
+        <h2>Questions?</h2>
+        <p>RESEARCH.md — sources, timing, Q&A prep.</p>
+        <div class="end-links">
+          <span>serverlesschats.com/32</span>
+          <span>lamby.cloud</span>
+          <span>github.com/customink/activerecord-aurora-serverless-adapter</span>
+        </div>
+        <footer>
+          <span>[Your name]</span>
+          <span>[email / handle]</span>
+        </footer>
+        <aside class="speaker-note">
+          Likely: Lamby vs Jets, Aurora Data API latency, Fargate vs Lambda, Hanami-lambda gem. All in RESEARCH.md.
+        </aside>
+      </section>
+    </main>
+
+    <div class="chrome" aria-hidden="true">
+      <div class="section-label" data-section-label>Start · 30 min</div>
+      <div class="progress"><div class="progress__bar"></div></div>
+    </div>
+    <nav class="controls" aria-label="Slide controls">
+      <button type="button" data-action="previous" aria-label="Previous slide">←</button>
+      <span class="counter"><span data-current>1</span> / <span data-total>16</span></span>
+      <button type="button" data-action="next" aria-label="Next slide">→</button>
+    </nav>
+    <button class="notes-toggle" type="button" data-action="notes" aria-label="Toggle speaker notes">N</button>
+    <div class="speaker-panel" data-speaker-panel aria-live="polite"></div>
+    <div class="hint">Arrows · F fullscreen · N notes · ~30 min</div>
+    <script src="slides.js"></script>
+  </body>
+</html>

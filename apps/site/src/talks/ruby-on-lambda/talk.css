@@ -1,0 +1,58 @@
+@font-face { font-family: AtlasSans; src: url("./assets/atlas-sans-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: AtlasSans; src: url("./assets/atlas-sans-300.woff2") format("woff2"); font-weight: 300; font-display: swap; }
+@font-face { font-family: AtlasSans; src: url("./assets/atlas-sans-100.woff2") format("woff2"); font-weight: 100; font-display: swap; }
+.ruby-slide { max-width: none; padding: 34px 52px 68px; justify-content: start; }
+.ruby-slide > div { flex: 1; min-height: 0; gap: 0; }
+.ruby-meta { display: flex; justify-content: space-between; padding-bottom: 18px; border-bottom: 1px solid var(--color-border); color: var(--color-muted); font-size: 13px; }
+.ruby-layout { display: grid; grid-template-columns: 38% 62%; flex: 1; min-height: 0; align-items: center; }
+.ruby-words { align-self: start; padding-top: 74px; padding-right: 20px; }
+.ruby-label { color: var(--color-accent); font-size: 14px; margin: 0 0 28px; }
+.ruby-words h2 { font-size: 52px; font-weight: 300; line-height: 1.025; letter-spacing: -.052em; margin: 0 0 26px; text-wrap: balance; }
+.ruby-subtitle { font-size: 18px; line-height: 1.5; color: var(--color-muted); max-width: 310px; margin: 0; }
+.ruby-layout .se-layered-diagram { height: 100%; min-height: 0; }
+
+/* Diagram-specific motion preserved from the artifact. */
+
+.ruby-slide-01 .se-layered-diagram[data-active="true"] .layer-0 .ink{animation:se-diagram-trace 2.3s cubic-bezier(.2,.65,.2,1) both}.ruby-slide-01 .se-layered-diagram[data-active="true"] .layer-2 .ink{animation-delay:.45s}
+.ruby-slide-02 .se-layered-diagram[data-active="true"] .layer{animation:ruby-orbit-enter 1.4s both;transform-origin:410px 285px}
+.ruby-slide-03 .se-layered-diagram[data-active="true"] .layer{animation:ruby-gather 1.2s both}
+.ruby-slide-04 .se-layered-diagram[data-active="true"] .ink{animation:ruby-signal 1.8s both;transform-origin:center bottom}
+.ruby-slide-05 .se-layered-diagram[data-active="true"] .node{animation:ruby-runtime 1.2s both}
+.ruby-slide-06 .se-layered-diagram[data-active="true"] .layer{animation:ruby-stack-in 1.1s both;animation-delay:var(--delay)}
+.ruby-slide-07 .se-layered-diagram[data-active="true"] .layer{animation:ruby-phase-in .9s both;animation-delay:var(--delay)}
+.ruby-slide-08 .se-layered-diagram[data-active="true"] .layer{animation:ruby-peel-in 1.1s both;animation-delay:var(--delay)}
+.ruby-slide-09 .se-layered-diagram[data-active="true"] .layer{animation:ruby-code-in .8s steps(12,end) both;animation-delay:var(--delay)}
+.ruby-slide-10 .se-layered-diagram[data-active="true"] .layer-0{animation:ruby-from-left 1.2s both}.ruby-slide-10 .se-layered-diagram[data-active="true"] .layer-1{animation:ruby-from-right 1.4s both}
+.ruby-slide-11 .se-layered-diagram[data-active="true"] .layer{animation:ruby-contract-in 1.2s both;animation-delay:var(--delay)}
+.ruby-slide-12 .se-layered-diagram[data-active="true"] .layer{animation:ruby-translate-in 1.1s both;animation-delay:var(--delay)}
+.ruby-slide-13 .se-layered-diagram[data-active="true"] .ink{animation:se-diagram-trace 2.8s ease-out both}.ruby-slide-13 .se-layered-diagram[data-active="true"] .node{animation:ruby-edge-in 1.7s both}
+.ruby-slide-14 .se-layered-diagram[data-active="true"] .layer-0{animation:ruby-from-left 1.2s both}.ruby-slide-14 .se-layered-diagram[data-active="true"] .layer-1{animation:ruby-from-right 1.2s both}
+.ruby-slide-15 .se-layered-diagram[data-active="true"] .layer{animation:ruby-rule-in 1s both;animation-delay:var(--delay)}
+.ruby-slide-16 .se-layered-diagram[data-active="true"] .layer{animation:ruby-boundary-in 1.4s both;animation-delay:var(--delay)}
+.ruby-slide-17 .se-layered-diagram[data-active="true"] .layer{animation:ruby-handoff-in 1.2s both;animation-delay:var(--delay)}
+.ruby-slide-18 .se-layered-diagram[data-active="true"] .layer{animation:ruby-code-in .8s steps(16,end) both;animation-delay:var(--delay)}
+.ruby-slide-19 .se-layered-diagram[data-active="true"] .layer{animation:ruby-system-in 1.2s both;animation-delay:var(--delay)}
+.ruby-slide-20 .se-layered-diagram[data-active="true"] .node{animation:ruby-heat-in 1.8s both}
+.ruby-slide-21 .se-layered-diagram[data-active="true"] .layer{animation:ruby-orbit-enter 1.5s both;animation-delay:var(--delay);transform-origin:385px 290px}
+.ruby-slide-22 .se-layered-diagram[data-active="true"] .layer-0{animation:ruby-compile-in 1.6s both}.ruby-slide-22 .se-layered-diagram[data-active="true"] .layer-1{animation:ruby-from-left 1.8s both}
+.ruby-slide-23 .se-layered-diagram[data-active="true"] .layer{animation:ruby-code-in 1s steps(12,end) both;animation-delay:var(--delay)}
+.ruby-slide-24 .se-layered-diagram[data-active="true"] .ink{animation:se-diagram-trace 3.2s cubic-bezier(.1,.4,.2,1) both}.ruby-slide-24 .se-layered-diagram[data-active="true"] .node{animation:ruby-edge-in 2s both}
+@keyframes ruby-orbit-enter{from{opacity:0;transform:rotate(-8deg) scale(.96)}to{opacity:1;transform:rotate(0) scale(1)}}
+@keyframes ruby-gather{from{opacity:0;transform:translateX(-25px)}to{opacity:1;transform:translateX(0)}}
+@keyframes ruby-signal{from{opacity:.05;transform:scaleY(.05)}to{opacity:1;transform:scaleY(1)}}
+@keyframes ruby-runtime{from{opacity:0;transform:translate(18px,18px)}to{opacity:1;transform:translate(0,0)}}
+@keyframes ruby-stack-in{from{opacity:0;transform:translateY(-24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ruby-phase-in{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:translateX(0)}}
+@keyframes ruby-peel-in{from{opacity:0;transform:translate(20px,-15px)}to{opacity:1;transform:translate(0,0)}}
+@keyframes ruby-code-in{from{opacity:0;clip-path:inset(0 100% 0 0)}to{opacity:1;clip-path:inset(0)}}
+@keyframes ruby-from-left{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}
+@keyframes ruby-from-right{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
+@keyframes ruby-contract-in{from{opacity:0;transform:scaleY(.7)}to{opacity:1;transform:scaleY(1)}}
+@keyframes ruby-translate-in{from{opacity:0;transform:translateX(-35px) scale(.98)}to{opacity:1;transform:translateX(0) scale(1)}}
+@keyframes ruby-edge-in{0%,30%{opacity:0}100%{opacity:1}}
+@keyframes ruby-rule-in{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ruby-boundary-in{from{opacity:0;clip-path:inset(0 90% 0 0)}to{opacity:1;clip-path:inset(0)}}
+@keyframes ruby-handoff-in{from{opacity:0;transform:translate(0,-18px)}to{opacity:1;transform:translate(0,0)}}
+@keyframes ruby-system-in{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
+@keyframes ruby-heat-in{from{opacity:.1;transform:translateY(35px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ruby-compile-in{from{opacity:0;transform:scaleX(1.08)}to{opacity:1;transform:scaleX(1)}}

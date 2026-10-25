@@ -1,0 +1,10 @@
+import { mergeTheme } from "@talks/slide-engine";
+
+// Per-talk overrides. Swap the accent, surface, anything in SlideTheme —
+// the base engine styles read everything through --se-* custom properties.
+// Temporal's own brand teal, used as the talk's accent block color.
+export const talkTheme = mergeTheme({
+  colors: {
+    accent: "#00b0af",
+  },
+});

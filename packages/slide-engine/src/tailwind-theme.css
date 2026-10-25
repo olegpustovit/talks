@@ -1,0 +1,28 @@
+/*
+  Declares the theme tokens Tailwind should generate utilities for
+  (bg-accent, text-fg, font-sans, ...). The values here are just fallbacks —
+  <ThemeProvider> overrides every one of them at runtime via inline custom
+  properties on .slide-engine-theme-root, which is how per-talk theming
+  (mergeTheme) actually takes effect. Import this once from an app's main
+  CSS, after `@import "tailwindcss"`.
+*/
+/*
+  Tailwind's automatic content detection only walks up from the importing
+  app's CSS file to that app's own project root — it never crosses into a
+  sibling workspace package. This @source directive is resolved relative to
+  THIS file, so every app that imports this stylesheet also gets utility
+  classes generated for every component under packages/slide-engine/src/.
+*/
+@source "./";
+
+@theme {
+  --color-bg: #f4f2ec;
+  --color-surface: #ffffff;
+  --color-fg: #111111;
+  --color-muted: #5c5c58;
+  --color-accent: #ff3d1a;
+  --color-accent-fg: #ffffff;
+  --color-border: #111111;
+  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Berkeley Mono", Menlo, Consolas, monospace;
+}

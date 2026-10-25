@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Senior exam · Lambda in Ruby</title><link rel="stylesheet" href="../../study-guide.css"></head>
+<body class="ruby"><header><span class="tag">Senior assessment · candidate copy</span><h1>Lambda in Ruby exam</h1><p class="lede">Ten engineering problems about Ruby call contracts, Lambda lifecycle, Rack translation, duplicate jobs, Rails boot, and when a small server is the better answer.</p><p><a href="study-guide.html">Study guide</a> · <a href="senior-exam-answers.html">Best answers and rubric</a></p></header><main>
+<section><h2>Rules and scoring</h2><div class="exam-meta"><div><strong>Time</strong><br>100 minutes</div><div><strong>Total</strong><br>100 points</div><div><strong>Resources</strong><br>Offline notes allowed</div><div><strong>Senior threshold</strong><br>80 points</div></div><p>Answer for the complete request path. Include the AWS integration, execution environment, Ruby process, Rack contract, database or queue, and failure acknowledgment when relevant.</p></section>
+<section><h2>Part 1: Ruby and runtime contracts</h2>
+<article class="question"><span class="points">10 points</span><h3>1. Separate the two lambdas</h3><p>Predict the behavior of the two calls and explain <code>return</code> behavior for a lambda versus a plain Proc. Then state exactly how much this teaches us about AWS Lambda architecture.</p><pre><code>loose = proc { |x| x }
+strict = -&gt;(x) { x }
+loose.call(1, 2)
+strict.call(1, 2)</code></pre></article>
+<article class="question"><span class="points">10 points</span><h3>2. Trace cold, warm, and failed invocation</h3><p>A container-image Rails function receives request A in a new environment, request B through the same warm environment, then request C times out. Describe initialization, handler calls, global objects, <code>/tmp</code>, freezing, reset, and what request D may observe. Separate guarantees from possible reuse.</p></article>
+</section>
+<section><h2>Part 2: HTTP and Rack</h2>
+<article class="question"><span class="points">10 points</span><h3>3. Translate a request</h3><p>An API Gateway HTTP API v2 event contains <code>requestContext.http.method</code>, <code>rawPath</code>, <code>rawQueryString</code>, headers, cookies, <code>body</code>, and <code>isBase64Encoded</code>. Map these to the Rack request contract. Then map <code>[201, {"content-type" =&gt; "application/json"}, ["{\"ok\":true}"]]</code> back to an integration response.</p></article>
+<article class="question"><span class="points">10 points</span><h3>4. Explain why Puma disappears</h3><p>Trace one HTTP request through API Gateway and Lamby into Rails. Explain why Lamby does not need Puma, where concurrency comes from, and which normal web-server responsibilities still need an owner.</p></article>
+<article class="question"><span class="points">10 points</span><h3>5. Compare three HTTP front doors</h3><p>Choose between a Function URL, API Gateway, and ALB for a private Rails admin application already deployed in a VPC. It needs corporate authentication, ten routes, no public anonymous access, and steady low traffic. State what facts you must confirm before choosing and why no service wins by definition.</p></article>
+</section>
+<section><h2>Part 3: state, database, and jobs</h2>
+<article class="question"><span class="points">10 points</span><h3>6. Review global state</h3><pre><code>CURRENT_USER = nil
+S3 = Aws::S3::Client.new
+
+def handler(event:, context:)
+  CURRENT_USER = event["user"]
+  S3.put_object(bucket: ENV["BUCKET"], key: CURRENT_USER, body: "ok")
+end</code></pre><p>Find the Ruby error and the Lambda design error. Rewrite the state handling. Explain which objects are reasonable to reuse across warm invocations.</p></article>
+<article class="question"><span class="points">10 points</span><h3>7. Pick a database path</h3><p>A Rails function scales from 5 to 600 concurrent environments during a sale. The Aurora database accepts 300 connections. Compare direct <code>mysql2</code> connections, RDS Proxy, and the RDS Data API. Recommend an investigation and safe initial configuration. Include pool sizing, transaction behavior, latency, IAM, and failure modes.</p></article>
+<article class="question"><span class="points">10 points</span><h3>8. Stop duplicate fulfillment</h3><p>An SQS-triggered Lambda marks an order shipped and calls a carrier. The carrier accepts the label, but Lambda times out before SQS receives batch success. Explain the next delivery and design one logical shipment per order. Include visibility timeout, idempotency, partial batch failure, and the dead-letter queue.</p></article>
+</section>
+<section><h2>Part 4: performance and architecture</h2>
+<article class="question"><span class="points">10 points</span><h3>9. Design a cold-start experiment</h3><p>A teammate says increasing memory from 1,024 MB to 1,792 MB and enabling YJIT cut Rails latency by 40 percent. Design an experiment that separates cold initialization, warm handler time, HTTP integration time, YJIT boot cost, and cost per request. State which percentiles and workload details belong in the report.</p></article>
+<article class="question"><span class="points">10 points</span><h3>10. Choose the boring architecture</h3><p>A Rails application has steady traffic, Action Cable, 90-second report requests, PostgreSQL, and four engineers who already run Kamal on two virtual machines. A proposal moves the whole app to Lambda for "automatic scale and no servers." Decide. Identify any bounded pieces that may still fit Lambda and the evidence required before moving them.</p></article>
+</section>
+<section><h2>Submission checklist</h2><ul><li>The answer distinguishes Lambda container images from ordinary container servers.</li><li>Rack input and output shapes are explicit.</li><li>Warm reuse is an optimization, never correctness.</li><li>Every queue side effect survives duplicate delivery.</li><li>The architecture decision includes complete-system cost and limits.</li></ul></section>
+</main></body></html>

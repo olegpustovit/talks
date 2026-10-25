@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b0d10" />
+    <title>[Talk title] · JavaScript Zagreb</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="deck" aria-live="polite">
+      <section class="slide slide--title is-active" data-title="Title">
+        <div class="eyebrow">JavaScript Zagreb · [date]</div>
+        <h1>[A sharp, specific talk title]</h1>
+        <p class="lede">[One sentence that tells the audience what they will learn.]</p>
+        <footer>
+          <span>[Your name]</span>
+          <span>[role / company / handle]</span>
+        </footer>
+      </section>
+
+      <section class="slide" data-title="Hook">
+        <div class="eyebrow">01 · The hook</div>
+        <h2>[Open with the problem, surprise, or story]</h2>
+        <p class="big-copy">[Give the audience one concrete reason to care. A number, failure, question, or short story works well.]</p>
+        <aside class="speaker-note">Speaker note: [What happened? Why did it matter to you? Keep this under two minutes.]</aside>
+      </section>
+
+      <section class="slide" data-title="Promise">
+        <div class="eyebrow">02 · Where we're going</div>
+        <h2>By the end, you will know…</h2>
+        <ol class="agenda">
+          <li><span>01</span>[First useful idea]</li>
+          <li><span>02</span>[Second useful idea]</li>
+          <li><span>03</span>[What they can try tomorrow]</li>
+        </ol>
+      </section>
+
+      <section class="slide" data-title="Context">
+        <div class="eyebrow">03 · Context</div>
+        <div class="split">
+          <div>
+            <h2>[Set up only the context the audience needs]</h2>
+            <p>[Define the system, constraint, or term in plain language.]</p>
+          </div>
+          <div class="visual-placeholder" role="img" aria-label="Placeholder for a diagram, screenshot, or photo">
+            <span>diagram / screenshot / photo</span>
+            <small>assets/[filename]</small>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Idea one">
+        <div class="eyebrow">04 · Idea one</div>
+        <h2>[State the idea as a complete sentence]</h2>
+        <pre><code><span class="muted">// Replace this with the smallest example that proves the point.</span>
+const before = "[old approach]";
+const after = "[new approach]";</code></pre>
+        <p class="caption">[Explain what changed. Do not narrate every line.]</p>
+      </section>
+
+      <section class="slide" data-title="Evidence">
+        <div class="eyebrow">05 · Show the result</div>
+        <h2>[What did you observe?]</h2>
+        <div class="metric-grid">
+          <article><strong>[42%]</strong><span>[metric and conditions]</span></article>
+          <article><strong>[8 → 2]</strong><span>[before and after]</span></article>
+        </div>
+        <p class="source">Source: [benchmark, incident, user study, or repository]</p>
+      </section>
+
+      <section class="slide" data-title="Tradeoff">
+        <div class="eyebrow">06 · The catch</div>
+        <h2>[Name the tradeoff honestly]</h2>
+        <div class="split cards">
+          <article>
+            <h3>Use it when</h3>
+            <p>[Concrete condition where this idea earns its keep.]</p>
+          </article>
+          <article>
+            <h3>Skip it when</h3>
+            <p>[Concrete condition where the simpler option wins.]</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Demo">
+        <div class="eyebrow">07 · Demo</div>
+        <h2>[One task, performed live]</h2>
+        <div class="demo-frame">
+          <span>live demo or recording</span>
+          <small>[Keep a screenshot or video fallback in assets/]</small>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Takeaways">
+        <div class="eyebrow">08 · Takeaways</div>
+        <h2>Remember these two things</h2>
+        <ul class="takeaways">
+          <li>[The main claim, in one sentence.]</li>
+          <li>[The next action, small enough to try this week.]</li>
+        </ul>
+      </section>
+
+      <section class="slide slide--end" data-title="Questions">
+        <div class="eyebrow">JavaScript Zagreb</div>
+        <h2>Questions?</h2>
+        <p>[your-site.dev] · [@your-handle]</p>
+        <div class="qr-placeholder" aria-label="Placeholder for a QR code">QR</div>
+        <footer>
+          <span>Slides: [short URL]</span>
+          <span>Code: [repository URL]</span>
+        </footer>
+      </section>
+    </main>
+
+    <div class="progress" aria-hidden="true"><div class="progress__bar"></div></div>
+    <nav class="controls" aria-label="Slide controls">
+      <button type="button" data-action="previous" aria-label="Previous slide">←</button>
+      <span class="counter"><span data-current>1</span> / <span data-total>9</span></span>
+      <button type="button" data-action="next" aria-label="Next slide">→</button>
+    </nav>
+    <div class="hint">Use arrow keys · press F for fullscreen</div>
+    <script src="slides.js"></script>
+  </body>
+</html>
+

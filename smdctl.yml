@@ -1,0 +1,16 @@
+name: slides
+description: Talks slide decks (embedded React + phone remote)
+command: /home/snowbear/projects/talks/bin/slides
+workdir: /home/snowbear/projects/talks
+environment:
+  HOST: "0.0.0.0"
+  PORT: "1578"
+  # Add SLIDES_PASSWORD in the ignored smdctl.local.yml before deployment.
+restart: always
+timeout_start: 30
+timeout_stop: 15
+no_new_privileges: true
+after:
+  - network-online.target
+wants:
+  - network-online.target

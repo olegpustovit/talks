@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0d0816" />
+    <title>Embind lab · WebAssembly and JavaScript</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <a href="../../index.html#28">← back to deck</a>
+          <h1>Embind lab</h1>
+          <p>A JavaScript wrapper, a C++ object, and one explicit lifetime.</p>
+        </div>
+        <div class="runtime" data-runtime><i></i><span>loading</span></div>
+      </header>
+
+      <section class="workbench">
+        <div class="picker">
+          <label for="color">Add a color</label>
+          <input id="color" type="color" value="#9b6cff" data-color />
+          <button type="button" data-add>Add to C++ object</button>
+          <div class="presets" aria-label="Preset colors">
+            <button type="button" style="--color:#f7df1e" data-preset="#f7df1e" aria-label="yellow"></button>
+            <button type="button" style="--color:#9b6cff" data-preset="#9b6cff" aria-label="purple"></button>
+            <button type="button" style="--color:#62e6e8" data-preset="#62e6e8" aria-label="cyan"></button>
+            <button type="button" style="--color:#ff6ba9" data-preset="#ff6ba9" aria-label="pink"></button>
+          </div>
+        </div>
+
+        <div class="object-card">
+          <div class="object-card__head"><code>new Module.Palette()</code><span data-state>alive</span></div>
+          <div class="swatches" data-swatches><p>No colors yet.</p></div>
+          <dl>
+            <div><dt>size()</dt><dd data-size>0</dd></div>
+            <div><dt>dominantChannel()</dt><dd data-dominant>none</dd></div>
+          </dl>
+          <button class="destroy" type="button" data-destroy>Destroy and recreate</button>
+        </div>
+      </section>
+
+      <section class="log" aria-live="polite">
+        <div class="log__head"><span>JavaScript event log</span><code>ownership is visible here</code></div>
+        <ol data-log></ol>
+      </section>
+    </main>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

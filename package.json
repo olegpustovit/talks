@@ -1,0 +1,28 @@
+{
+  "name": "talks",
+  "private": true,
+  "packageManager": "bun@1.3.13",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "sync:claude": "node scripts/sync-claude.mjs",
+    "postinstall": "bun run sync:claude",
+    "test": "node --test scripts/sync-claude.test.mjs scripts/skills-frontmatter.test.mjs .agents/skills/slide-images/scripts/fetch-image.test.mjs",
+    "test:sync": "node --test scripts/sync-claude.test.mjs",
+    "dev": "bun run --filter=@talks/site dev",
+    "dev:server": "go run ./cmd/slides",
+    "build": "bun run --filter=@talks/site build",
+    "build:binary": "make build",
+    "deploy": "make deploy",
+    "preview": "bun run --filter=@talks/site preview",
+    "lint": "bun run --filter=@talks/site lint",
+    "typecheck": "bun run --filter=@talks/site typecheck",
+    "build:static": "bun run --filter=@talks/site build --mode static"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "wrangler": "4.152.0"
+  }
+}

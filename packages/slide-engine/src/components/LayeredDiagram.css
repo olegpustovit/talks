@@ -1,0 +1,20 @@
+.se-layered-diagram { display: flex; flex-direction: column; margin: 0; min-width: 0; width: 100%; }
+.se-layered-diagram-art { flex: 1; min-height: 0; display: flex; align-items: center; }
+.se-layered-diagram-art svg { width: 100%; height: 100%; overflow: visible; font-family: inherit; }
+.se-layered-diagram .layer { transition: opacity .7s, transform .7s; transform-box: fill-box; transform-origin: center; }
+.se-layered-diagram[data-step="0"] :is(.layer-1, .layer-2),
+.se-layered-diagram[data-step="1"] .layer-2 { opacity: .06 !important; animation: none !important; }
+.se-layered-diagram[data-active="true"][data-step="0"] .layer-0,
+.se-layered-diagram[data-active="true"][data-step="1"] .layer-1,
+.se-layered-diagram[data-active="true"][data-step="2"] .layer-2 { animation: se-diagram-enter .9s both; }
+.se-layered-diagram[data-active="true"] .ink { animation: se-diagram-trace 1.8s cubic-bezier(.22,.7,.2,1) both; stroke-dasharray: 1; }
+.se-layered-diagram figcaption { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 14px; border-top: 1px solid var(--color-border); color: var(--color-muted); font-size: 12px; line-height: 1.4; }
+.se-layered-diagram figcaption > div { display: flex; gap: 8px; }
+.se-layered-diagram button { cursor: pointer; width: 30px; height: 30px; padding: 0; border: 1px solid var(--color-border); border-radius: 50%; background: transparent; color: inherit; font: inherit; }
+.se-layered-diagram button[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-accent); }
+.se-layered-diagram button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+@keyframes se-diagram-enter { from { opacity: .08; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes se-diagram-trace { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .se-layered-diagram .layer, .se-layered-diagram .ink { animation: none !important; transition: none !important; }
+}

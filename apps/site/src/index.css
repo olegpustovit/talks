@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@import "@talks/slide-engine/tailwind-theme.css";
+
+/* Talk decks live under src/talks/ — include them in Tailwind's scan. */
+@source "./talks";

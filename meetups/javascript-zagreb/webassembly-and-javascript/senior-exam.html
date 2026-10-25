@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Senior exam · WebAssembly and JavaScript</title><link rel="stylesheet" href="../../study-guide.css"></head>
+<body><header><span class="tag">Senior assessment · candidate copy</span><h1>WebAssembly and JavaScript exam</h1><p class="lede">Ten engineering problems. The exam rewards correct contracts, ownership analysis, and measurement plans. Memorized speed claims earn nothing.</p><p><a href="study-guide.html">Study guide</a> · <a href="senior-exam-answers.html">Best answers and rubric</a></p></header><main>
+<section><h2>Rules and scoring</h2><div class="exam-meta"><div><strong>Time</strong><br>90 minutes</div><div><strong>Total</strong><br>100 points</div><div><strong>Resources</strong><br>Offline notes allowed</div><div><strong>Senior threshold</strong><br>80 points</div></div><p>Answer in complete technical sentences. When a question asks for a design, name the representation, copy behavior, owner, lifetime, and failure mode. Code can be pseudocode unless the question requests exact JavaScript or C++.</p></section>
+<section><h2>Part 1: numeric contracts</h2>
+<article class="question"><span class="points">10 points</span><h3>1. One word, three readings</h3><p>Without running code, predict all four lines and explain each conversion:</p><pre><code>const x = 0xffffffff;
+console.log(x);
+console.log(x | 0);
+console.log(new Uint32Array([x])[0]);
+console.log(new Int32Array([x])[0]);</code></pre><p>Then explain why saying "the real value is -1" is wrong.</p></article>
+<article class="question"><span class="points">10 points</span><h3>2. Audit a wrapping function</h3><p>A teammate writes this C++ and promises that adding one to 2,147,483,647 returns -2,147,483,648 after compilation to Wasm:</p><pre><code>int32_t add_one(int32_t x) { return x + 1; }</code></pre><p>Identify the language-level problem. Supply a version whose wrapping contract is defined. Explain what JavaScript sees when the result crosses an <code>i32</code> export.</p></article>
+</section>
+<section><h2>Part 2: history and machine model</h2>
+<article class="question"><span class="points">10 points</span><h3>3. Why asm.js mattered</h3><p>Explain <code>x = x | 0</code> to a JavaScript developer at three levels: ordinary JavaScript behavior, asm.js validator meaning, and the limitation that motivated explicit Wasm types. Your answer must explain why old browsers could still run the function.</p></article>
+<article class="question"><span class="points">10 points</span><h3>4. Module, instance, memory, table</h3><p>A page creates two instances from one compiled Wasm module. Can the instances have separate mutable state? Can they share one memory? What is a table for? Why can neither instance call <code>document.querySelector</code> unless the host gives it a route to JavaScript?</p></article>
+</section>
+<section><h2>Part 3: boundary incident</h2>
+<article class="question"><span class="points">10 points</span><h3>5. Find the stale view</h3><pre><code>const ptr = Module._make_histogram();
+const histogram = Module.HEAPU32.subarray(ptr / 4, ptr / 4 + 256);
+Module._process_large_image(imagePtr, imageLength); // may grow memory
+console.log(histogram[0]);
+Module._free(ptr);</code></pre><p>Explain two independent lifetime hazards. Rewrite the sequence for a stable JavaScript-owned result.</p></article>
+<article class="question"><span class="points">10 points</span><h3>6. Design the image API</h3><p>You must grayscale a 24-megapixel RGBA image. Compare these APIs:</p><pre><code>gray_pixel(r, g, b, a) -&gt; packed_pixel
+gray_image(ptr, byte_length, width, height) -&gt; void</code></pre><p>Choose one. Account for calls, allocation, copies, bounds validation, integer overflow in size calculation, ownership, and cleanup. State what you would benchmark.</p></article>
+<article class="question"><span class="points">10 points</span><h3>7. Strings without hand waving</h3><p>Describe every step required to pass the JavaScript string <code>"Živjo 👋"</code> to a C function accepting <code>const char *</code>. Include encoding, byte length, termination, allocation, call lifetime, and cleanup. Explain when the C function may retain the pointer.</p></article>
+</section>
+<section><h2>Part 4: API and performance judgment</h2>
+<article class="question"><span class="points">10 points</span><h3>8. Pick an interop layer</h3><p>You expose four numeric DSP functions and one C++ class with methods and internal state. Recommend raw exports, <code>ccall</code>/<code>cwrap</code>, Embind, or a mixture. Defend the choice using wrapper size, call frequency, type conversion, and object destruction.</p></article>
+<article class="question"><span class="points">10 points</span><h3>9. Reject a weak benchmark</h3><p>A benchmark runs Fibonacci once in JavaScript and once in Wasm after the Wasm module is already loaded. It reports "Wasm is 4.2 times faster." List the threats to that conclusion and design a benchmark that could support a production decision.</p></article>
+<article class="question"><span class="points">10 points</span><h3>10. Architecture decision</h3><p>A team proposes moving a form-heavy dashboard to Rust and Wasm because the page feels slow. Profiling shows 62 percent of time in network waits, 27 percent in layout and paint, 8 percent in JavaScript, and 3 percent elsewhere. Give a decision, an investigation plan, and the evidence that would make you reconsider.</p></article>
+</section>
+<section><h2>Submission checklist</h2><ul><li>Every pointer has an owner and release point.</li><li>Every typed view has a validity condition.</li><li>Every speed claim names the measured interval.</li><li>Signedness is attached to an operation, not casually assigned to raw bits.</li><li>Wasm and JavaScript responsibilities remain separate.</li></ul></section>
+</main></body></html>
