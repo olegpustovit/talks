@@ -3,6 +3,7 @@ import { isStaticDeployment } from "./deployment";
 import { Home } from "./Home";
 import { Remote } from "./Remote";
 import { TalkPage } from "./TalkPage";
+import { Reel } from "./reel/Reel";
 
 export function App() {
   return (
@@ -10,6 +11,7 @@ export function App() {
       <Route path="/" element={<Home />} />
       {!isStaticDeployment && <Route path="/remote" element={<Remote />} />}
       <Route path="/t/:slug" element={<TalkPage />} />
+      <Route path="/reel" element={<Reel />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -1,5 +1,4 @@
-import { LayeredDiagram, Slide, SpeakerNote } from "@talks/slide-engine";
-import diagram from "../assets/01.svg?raw";
+import { Slide, SpeakerNote, SilkField } from "@talks/slide-engine";
 
 export function TitleSlide() {
   return (
@@ -8,20 +7,16 @@ export function TitleSlide() {
       <div className="ruby-layout">
         <div className="ruby-words">
           <p className="ruby-label">{"01 / The need"}</p>
-          <h2>{"Running Ruby apps on AWS Lambda"}</h2>
-          <p className="ruby-subtitle">{"A small API. A familiar language. A different place to run it."}</p>
+          <h2>{"Running Ruby apps"}<br />{"on AWS Lambda"}</h2>
+          <p className="ruby-subtitle">{"Same Rack app. Boot time is now latency."}</p>
         </div>
-        <LayeredDiagram svg={diagram} cues={["A useful interface", "A small Ruby app", "A deployment worth understanding"]} />
+        <div className="ruby-threads">
+          <SilkField label="Hundreds of coloured strands, combed straight at the left, billowing and folding to the right like silk in a slow current" />
+        </div>
       </div>
       <SpeakerNote>
-        <p>{"Open on the need, rather than on an AWS feature list. A shortcut needs an endpoint, a frontend needs a backend, or an agent needs an action it can call. These are small applications that still deserve familiar routing, authentication and tests."}</p>
-        <p>{"The promise is practical: keep the Ruby code you can read and maintain, then investigate what changes when it runs on Lambda. The talk follows one application through that investigation. The final compiler experiment asks how far we can take startup performance while keeping Ruby."}</p>
-        <h3>Reveal cues</h3>
-        <ol>
-          <li>{"Let the clients appear before naming Lambda."}</li>
-          <li>{"Follow one request into the Ruby API."}</li>
-          <li>{"State the promise and move to the problem."}</li>
-        </ol>
+        <p>{"Open on the need, rather than on an AWS feature list. A shortcut needs an endpoint, a frontend needs a backend, or an agent needs an action it can call. The strands on the right are those requests: orderly where they come in, then pulled every way by the traffic. The closing slide shows the same strands. These are small applications that still deserve familiar routing, authentication and tests."}</p>
+        <p>{"The promise is practical: keep the Ruby code you can read and maintain, then investigate what changes when it runs on Lambda. The subtitle is the catch: when the process can start on a request, boot time stops being a deploy detail and becomes latency. The talk follows one application through that investigation. The final compiler experiment asks how far we can take startup performance while keeping Ruby."}</p>
       </SpeakerNote>
     </Slide>
   );

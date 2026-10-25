@@ -17,6 +17,12 @@ export interface SlideTheme {
   radius: string;
   /** Optional named colors for authored diagrams, exposed as --se-diagram-*. */
   diagramColors?: Record<string, string>;
+  /**
+   * Optional layout and type tokens, exposed as --se-<name>. The grid overlay
+   * (G) reads grid-columns, grid-gutter, grid-margin-x, grid-margin-top and
+   * grid-margin-bottom; text-* tokens are `font` shorthands without the family.
+   */
+  tokens?: Record<string, string>;
 }
 
 /**
@@ -82,6 +88,7 @@ function themeToCssVars(theme: SlideTheme): CSSProperties {
     ...Object.fromEntries(
       Object.entries(theme.diagramColors ?? {}).map(([name, color]) => [`--se-diagram-${name}`, color]),
     ),
+    ...Object.fromEntries(Object.entries(theme.tokens ?? {}).map(([name, value]) => [`--se-${name}`, value])),
   } as CSSProperties;
 }
 
@@ -94,8 +101,10 @@ export function ThemeProvider({
 }) {
   const style = useMemo(() => themeToCssVars(theme), [theme]);
   return (
-    <div className="slide-engine-theme-root bg-bg font-sans text-fg" style={style}>
-      {children}
-    </div>
+    <ThemeContext.Provider value={theme}>
+      <div className="slide-engine-theme-root bg-bg font-sans text-fg" style={style}>
+        {children}
+      </div>
+    </ThemeContext.Provider>
   );
 }

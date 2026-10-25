@@ -2,7 +2,6 @@ package hub
 
 import (
 	"context"
-	"crypto/subtle"
 	"encoding/json"
 	"log/slog"
 	"sync"
@@ -47,9 +46,9 @@ type Hub struct {
 	state    json.RawMessage
 }
 
-// New returns a Hub. A non-empty password is required in a remote's hello
-// before it receives deck state; next/prev stay open to every remote, as the
-// /remote page and /ws are exempt from the site's password gate.
+// New returns a Hub. Every remote receives deck state (titles, step captions, timing) and may
+// drive the deck; /remote and /ws are exempt from the site's password gate. The password is kept
+// for callers that still pass it, but no longer gates anything here.
 func New(log *slog.Logger, password string) *Hub {
 	if log == nil {
 		log = slog.Default()
@@ -88,7 +87,9 @@ func (h *Hub) ServeWS(ctx context.Context, conn *websocket.Conn) {
 			if role != RoleDeck && role != RoleRemote {
 				role = RoleDeck
 			}
-			notes := role == RoleRemote && h.allowNotes(msg.Password)
+			// Deck state is slide titles, step captions and timing: no speaker notes. Every remote
+			// gets it, so the phone shows the slide list and preview without its own password.
+			notes := role == RoleRemote
 			h.setRole(c, role, notes)
 			_ = h.write(ctx, c, Message{Type: "hello", Role: string(role), Notes: notes})
 			if state := h.lastState(); notes && state != nil {
@@ -100,6 +101,13 @@ func (h *Hub) ServeWS(ctx context.Context, conn *websocket.Conn) {
 				continue
 			}
 			h.broadcast(Message{Type: msg.Type}, func(c *client) bool { return c.role == RoleDeck })
+		case "nextSlide", "prevSlide", "goto", "pointer", "scroll":
+			// Slide jumps and the trackpad pointer carry their own fields (index, x, y, click);
+			// pass the remote's message through to decks as sent.
+			if c.role != RoleRemote {
+				continue
+			}
+			h.broadcastRaw(data, func(c *client) bool { return c.role == RoleDeck })
 		case "state":
 			if c.role != RoleDeck || len(msg.State) == 0 {
 				continue
@@ -112,10 +120,6 @@ func (h *Hub) ServeWS(ctx context.Context, conn *websocket.Conn) {
 			h.log.Debug("ws unknown type", "type", msg.Type)
 		}
 	}
-}
-
-func (h *Hub) allowNotes(password string) bool {
-	return h.password == "" || subtle.ConstantTimeCompare([]byte(password), []byte(h.password)) == 1
 }
 
 func (h *Hub) add(c *client) {
@@ -182,6 +186,24 @@ func (h *Hub) broadcast(msg Message, to func(*client) bool) {
 	ctx := context.Background()
 	for _, c := range targets {
 		if err := h.write(ctx, c, msg); err != nil {
+			h.log.Debug("ws write failed", "err", err)
+		}
+	}
+}
+
+func (h *Hub) broadcastRaw(data []byte, to func(*client) bool) {
+	h.mu.Lock()
+	targets := make([]*client, 0, len(h.clients))
+	for c := range h.clients {
+		if to(c) {
+			targets = append(targets, c)
+		}
+	}
+	h.mu.Unlock()
+
+	ctx := context.Background()
+	for _, c := range targets {
+		if err := c.conn.Write(ctx, websocket.MessageText, data); err != nil {
 			h.log.Debug("ws write failed", "err", err)
 		}
 	}

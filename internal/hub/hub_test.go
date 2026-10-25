@@ -28,7 +28,35 @@ func TestRemoteAdvancesDeck(t *testing.T) {
 	drainUntil(t, ctx, deck, "next")
 }
 
-func TestDeckStateReachesOnlyRemotesWithThePassword(t *testing.T) {
+func TestRemoteJumpsAndPointsReachDeckIntact(t *testing.T) {
+	url := serve(t, hub.New(quiet(), ""))
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	deck := dial(t, ctx, url, `{"type":"hello","role":"deck"}`)
+	remote := dial(t, ctx, url, `{"type":"hello","role":"remote"}`)
+
+	for _, sent := range []string{`{"type":"goto","index":7}`, `{"type":"pointer","x":0.25,"y":0.5,"click":true}`} {
+		if err := remote.Write(ctx, websocket.MessageText, []byte(sent)); err != nil {
+			t.Fatalf("send: %v", err)
+		}
+		deadline := time.Now().Add(2 * time.Second)
+		for {
+			if time.Now().After(deadline) {
+				t.Fatalf("deck never got %s", sent)
+			}
+			_, data, err := deck.Read(ctx)
+			if err != nil {
+				t.Fatalf("read: %v", err)
+			}
+			if string(data) == sent {
+				break
+			}
+		}
+	}
+}
+
+func TestDeckStateReachesEveryRemote(t *testing.T) {
 	url := serve(t, hub.New(quiet(), "secret"))
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -36,12 +64,10 @@ func TestDeckStateReachesOnlyRemotesWithThePassword(t *testing.T) {
 	deck := dial(t, ctx, url, `{"type":"hello","role":"deck"}`)
 	sendState(t, ctx, deck, 3)
 
-	stranger := dial(t, ctx, url, `{"type":"hello","role":"remote","password":"nope"}`)
-
-	// A remote that connects after the deck moved still gets the current slide.
-	phone, hello := dialHello(t, ctx, url, `{"type":"hello","role":"remote","password":"secret"}`)
+	// A remote that connects after the deck moved still gets the current slide, password or not.
+	phone, hello := dialHello(t, ctx, url, `{"type":"hello","role":"remote"}`)
 	if !hello.Notes {
-		t.Fatal("remote with the password was not allowed notes")
+		t.Fatal("remote was not sent deck state")
 	}
 	if got := stateIndex(t, drainUntil(t, ctx, phone, "state")); got != 3 {
 		t.Fatalf("cached state index = %d, want 3", got)
@@ -50,19 +76,6 @@ func TestDeckStateReachesOnlyRemotesWithThePassword(t *testing.T) {
 	sendState(t, ctx, deck, 4)
 	if got := stateIndex(t, drainUntil(t, ctx, phone, "state")); got != 4 {
 		t.Fatalf("live state index = %d, want 4", got)
-	}
-
-	quietCtx, quietCancel := context.WithTimeout(ctx, 300*time.Millisecond)
-	defer quietCancel()
-	for {
-		_, data, err := stranger.Read(quietCtx)
-		if err != nil {
-			return // timed out without ever seeing state
-		}
-		var msg hub.Message
-		if json.Unmarshal(data, &msg) == nil && msg.Type == "state" {
-			t.Fatal("remote with the wrong password received deck state")
-		}
 	}
 }
 

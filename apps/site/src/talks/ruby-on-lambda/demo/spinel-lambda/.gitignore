@@ -1,0 +1,3 @@
+# Spinel checkout (make spinel clones it at SPINEL_REV) and build outputs
+vendor/
+build/

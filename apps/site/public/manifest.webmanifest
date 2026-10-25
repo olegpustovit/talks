@@ -1,0 +1,17 @@
+{
+  "name": "Slides remote",
+  "short_name": "Remote",
+  "description": "Drive a talk from your phone: steps, slide jumps and a trackpad pointer.",
+  "start_url": "/remote",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080a0b",
+  "theme_color": "#080a0b",
+  "icons": [
+    { "src": "/remote-icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/remote-icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/remote-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/remote-icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

@@ -1,5 +1,6 @@
+import { keepAlive } from "./keepAlive";
 import { useCallback, useEffect, useState } from "react";
-import type { DeckState } from "./useRemoteControl";
+import type { DeckState, RemotePointer, RemoteScroll } from "./useRemoteControl";
 
 type Status = {
   connected: boolean;
@@ -19,7 +20,10 @@ function wsURL(): string {
  */
 export function useRemoteSender(password = ""): {
   status: Status;
-  send: (type: "next" | "prev") => void;
+  send: (type: "next" | "prev" | "nextSlide" | "prevSlide") => void;
+  goTo: (index: number) => void;
+  point: (p: RemotePointer) => void;
+  scroll: (s: RemoteScroll) => void;
   /** null until the hub has answered this connection's hello. */
   notesAllowed: boolean | null;
   deck: DeckState | null;
@@ -42,6 +46,7 @@ export function useRemoteSender(password = ""): {
     function connect() {
       if (closed) return;
       ws = new WebSocket(wsURL());
+      const sock = ws;
       setSocket(ws);
 
       ws.addEventListener("open", () => {
@@ -51,6 +56,7 @@ export function useRemoteSender(password = ""): {
       });
 
       ws.addEventListener("message", (event) => {
+        alive.seen();
         let msg: {
           type?: string;
           role?: string;
@@ -80,10 +86,11 @@ export function useRemoteSender(password = ""): {
       });
 
       ws.addEventListener("close", () => {
+        // A socket replaced by a forced reconnect must not touch state or schedule another one.
+        if (closed || sock !== ws) return;
         setStatus((s) => ({ ...s, connected: false }));
         setSocket(null);
-        if (closed) return;
-        const delay = Math.min(1000 * 2 ** attempt, 8000);
+        const delay = Math.min(500 * 2 ** attempt, 4000);
         attempt += 1;
         retryTimer = window.setTimeout(connect, delay);
       });
@@ -93,22 +100,37 @@ export function useRemoteSender(password = ""): {
       });
     }
 
+    const alive = keepAlive(
+      () => ws,
+      () => {
+        if (closed) return;
+        if (retryTimer !== undefined) window.clearTimeout(retryTimer);
+        attempt = 0;
+        ws?.close();
+        connect();
+      },
+    );
     connect();
 
     return () => {
+      alive.stop();
       closed = true;
       if (retryTimer !== undefined) window.clearTimeout(retryTimer);
       ws?.close();
     };
   }, [password]);
 
-  const send = useCallback(
-    (type: "next" | "prev") => {
+  const raw = useCallback(
+    (msg: object) => {
       if (!socket || socket.readyState !== WebSocket.OPEN) return;
-      socket.send(JSON.stringify({ type }));
+      socket.send(JSON.stringify(msg));
     },
     [socket],
   );
+  const send = useCallback((type: "next" | "prev" | "nextSlide" | "prevSlide") => raw({ type }), [raw]);
+  const goTo = useCallback((index: number) => raw({ type: "goto", index }), [raw]);
+  const point = useCallback((p: RemotePointer) => raw({ type: "pointer", ...p }), [raw]);
+  const scroll = useCallback((s: RemoteScroll) => raw({ type: "scroll", ...s }), [raw]);
 
-  return { status, send, notesAllowed, deck };
+  return { status, send, goTo, point, scroll, notesAllowed, deck };
 }

@@ -9,6 +9,10 @@ export interface DeckNavigation {
   stepTotals: number[];
   notesVisible: boolean;
   outlineVisible: boolean;
+  /** The theme's design-system sheet (D). */
+  designVisible: boolean;
+  /** Column grid overlay on the stage (G). */
+  gridVisible: boolean;
   goTo: (index: number) => void;
   /** Jump to a specific reveal in the active slide. */
   goToStep: (step: number) => void;
@@ -20,8 +24,12 @@ export interface DeckNavigation {
   forceNextSlide: () => void;
   toggleNotes: () => void;
   toggleOutline: () => void;
+  toggleDesign: () => void;
   /** A step-owning component (e.g. RevealCode) reports its total substep count here. */
   registerStepTotal: (slideIndex: number, total: number) => void;
+  /** Captions for each step of a slide (step 0 first), when the stepping component has them. */
+  stepLabels: string[][];
+  registerStepLabels: (slideIndex: number, labels: string[]) => void;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -54,11 +62,16 @@ function toggleFullscreen() {
   }
 }
 
-export function useDeckNavigation(count: number): DeckNavigation {
+/** Show a fixed slide and step, with no keys, hash or touch: a preview (e.g. on the phone remote). */
+export type DeckPreview = { index: number; step: number };
+
+export function useDeckNavigation(count: number, preview?: DeckPreview | null): DeckNavigation {
   const [index, setIndexState] = useState(() => indexFromHash(count));
   const [activeStep, setActiveStep] = useState(0);
   const [notesVisible, setNotesVisible] = useState(false);
   const [outlineVisible, setOutlineVisible] = useState(false);
+  const [designVisible, setDesignVisible] = useState(false);
+  const [gridVisible, setGridVisible] = useState(false);
   const indexRef = useRef(index);
   indexRef.current = index;
   const stepTotalsRef = useRef<number[]>([]);
@@ -70,6 +83,16 @@ export function useDeckNavigation(count: number): DeckNavigation {
       if (prev[slideIndex] === total) return prev;
       const next = [...prev];
       next[slideIndex] = total;
+      return next;
+    });
+  }, []);
+
+  const [stepLabels, setStepLabels] = useState<string[][]>([]);
+  const registerStepLabels = useCallback((slideIndex: number, labels: string[]) => {
+    setStepLabels((prev) => {
+      if ((prev[slideIndex] ?? []).join("\u0000") === labels.join("\u0000")) return prev;
+      const next = [...prev];
+      next[slideIndex] = labels;
       return next;
     });
   }, []);
@@ -111,20 +134,24 @@ export function useDeckNavigation(count: number): DeckNavigation {
   }, []);
   const toggleNotes = useCallback(() => setNotesVisible((v) => !v), []);
   const toggleOutline = useCallback(() => setOutlineVisible((v) => !v), []);
+  const toggleDesign = useCallback(() => setDesignVisible((v) => !v), []);
 
   useEffect(() => {
+    if (preview) return;
     window.location.hash = String(index + 1);
-  }, [index]);
+  }, [index, preview]);
 
   useEffect(() => {
+    if (preview) return;
     function onHashChange() {
       goTo(indexFromHash(count));
     }
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
-  }, [count, goTo]);
+  }, [count, goTo, preview]);
 
   useEffect(() => {
+    if (preview) return;
     function onKeyDown(event: KeyboardEvent) {
       if (isEditableTarget(event.target)) return;
       switch (event.key) {
@@ -168,8 +195,17 @@ export function useDeckNavigation(count: number): DeckNavigation {
         case "I":
           setOutlineVisible((v) => !v);
           break;
+        case "d":
+        case "D":
+          setDesignVisible((v) => !v);
+          break;
+        case "g":
+        case "G":
+          setGridVisible((v) => !v);
+          break;
         case "Escape":
           setOutlineVisible(false);
+          setDesignVisible(false);
           break;
         default:
           break;
@@ -177,9 +213,10 @@ export function useDeckNavigation(count: number): DeckNavigation {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [count, forceNextSlide, goTo, next, prev]);
+  }, [count, forceNextSlide, goTo, next, prev, preview]);
 
   useEffect(() => {
+    if (preview) return;
     let startX = 0;
     function onTouchStart(event: TouchEvent) {
       startX = event.touches[0]?.clientX ?? 0;
@@ -197,15 +234,17 @@ export function useDeckNavigation(count: number): DeckNavigation {
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchend", onTouchEnd);
     };
-  }, [next, prev]);
+  }, [next, prev, preview]);
 
   return {
-    index,
+    index: preview ? clamp(preview.index, 0, Math.max(count - 1, 0)) : index,
     count,
-    activeStep,
+    activeStep: preview ? preview.step : activeStep,
     stepTotals,
     notesVisible,
     outlineVisible,
+    designVisible,
+    gridVisible,
     goTo,
     goToStep,
     next,
@@ -213,6 +252,9 @@ export function useDeckNavigation(count: number): DeckNavigation {
     forceNextSlide,
     toggleNotes,
     toggleOutline,
+    toggleDesign,
     registerStepTotal,
+    stepLabels,
+    registerStepLabels,
   };
 }

@@ -1,0 +1,8 @@
+.se-grid-overlay { position: absolute; inset: 0; z-index: 30; pointer-events: none;
+  --cols: var(--se-grid-columns, 12); --gutter: var(--se-grid-gutter, 24px); --mx: var(--se-grid-margin-x, 64px);
+  --base: var(--se-grid-baseline, 8px);
+  background: repeating-linear-gradient(to bottom, transparent 0 calc(var(--base) - 1px), color-mix(in srgb, var(--color-accent) 10%, transparent) calc(var(--base) - 1px) var(--base)); }
+.se-grid-overlay-cols { position: absolute; left: var(--mx); right: var(--mx); top: var(--se-grid-margin-top, 32px); bottom: var(--se-grid-margin-bottom, 80px);
+  display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: var(--gutter);
+  outline: 1px dashed color-mix(in srgb, var(--se-diagram-coral, #f44) 70%, transparent); }
+.se-grid-overlay-cols span { background: color-mix(in srgb, var(--se-diagram-coral, #f44) 9%, transparent); color: var(--se-diagram-coral, #f44); font: 500 10px/1 var(--font-mono); padding: 4px; }

@@ -1,20 +1,27 @@
-@font-face { font-family: AtlasSans; src: url("./assets/atlas-sans-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
-@font-face { font-family: AtlasSans; src: url("./assets/atlas-sans-300.woff2") format("woff2"); font-weight: 300; font-display: swap; }
-@font-face { font-family: AtlasSans; src: url("./assets/atlas-sans-100.woff2") format("woff2"); font-weight: 100; font-display: swap; }
-.ruby-slide { max-width: none; padding: 34px 52px 68px; justify-content: start; }
+@font-face { font-family: Geist; src: url("./assets/geist-variable.woff2") format("woff2"); font-weight: 100 900; font-display: block; }
+/* Pragmasevka is for code only: Ruby, SQL, paths, commands. Captions, labels and numbers stay in Geist. */
+@font-face { font-family: Pragmasevka; src: url("./assets/pragmasevka-regular.woff2") format("woff2"); font-weight: 400; font-display: block; }
+@font-face { font-family: Pragmasevka; src: url("./assets/pragmasevka-bold.woff2") format("woff2"); font-weight: 700; font-display: block; }
+
+/* Frame. Every slide sits on the theme grid (theme.ts tokens); press G to see it. */
+.ruby-slide { position: relative; max-width: none; padding: var(--se-grid-margin-top) var(--se-grid-margin-x) var(--se-grid-margin-bottom); justify-content: start; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; font-kerning: normal; }
 .ruby-slide > div { flex: 1; min-height: 0; gap: 0; }
-.ruby-meta { display: flex; justify-content: space-between; padding-bottom: 18px; border-bottom: 1px solid var(--color-border); color: var(--color-muted); font-size: 13px; }
-.ruby-layout { display: grid; grid-template-columns: 38% 62%; flex: 1; min-height: 0; align-items: center; }
-.ruby-words { align-self: start; padding-top: 74px; padding-right: 20px; }
-.ruby-label { color: var(--color-accent); font-size: 14px; margin: 0 0 28px; }
-.ruby-words h2 { font-size: 52px; font-weight: 300; line-height: 1.025; letter-spacing: -.052em; margin: 0 0 26px; text-wrap: balance; }
-.ruby-subtitle { font-size: 18px; line-height: 1.5; color: var(--color-muted); max-width: 310px; margin: 0; }
+.ruby-meta { display: flex; justify-content: space-between; padding-bottom: 15px; border-bottom: 1px solid var(--color-border); color: var(--color-muted); font: var(--se-text-label) var(--font-sans); }
+.ruby-label { color: var(--color-accent); font: var(--se-text-ui) var(--font-sans); margin: 0 0 24px; }
+.ruby-mono { font-family: var(--font-mono); font-variant-ligatures: none; font-feature-settings: "calt" 0, "liga" 0; }
+
+/* Words on columns 1–5, diagram on 7–12. */
+.ruby-layout { display: grid; grid-template-columns: repeat(var(--se-grid-columns), 1fr); column-gap: var(--se-grid-gutter); flex: 1; min-height: 0; padding-top: 64px; }
+.ruby-words { grid-column: 1 / span 5; align-self: start; }
+.ruby-layout > :not(.ruby-words) { grid-column: 7 / -1; min-height: 0; }
+.ruby-words h2 { font: var(--se-text-h1) var(--font-sans); letter-spacing: var(--se-tracking-tight); margin: 0 0 24px; text-wrap: balance; }
+.ruby-subtitle { font: var(--se-text-body) var(--font-sans); letter-spacing: var(--se-tracking-snug); color: var(--color-muted); margin: 0; text-wrap: pretty; }
 .ruby-layout .se-layered-diagram { height: 100%; min-height: 0; }
+.ruby-slide .se-layered-diagram figcaption { padding-top: 16px; font: var(--se-text-small) var(--font-sans); }
+.ruby-slide .se-layered-diagram button { width: 32px; height: 32px; font: var(--se-text-label) var(--font-sans); font-variant-numeric: tabular-nums; }
 
 /* Diagram-specific motion preserved from the artifact. */
 
-.ruby-slide-01 .se-layered-diagram[data-active="true"] .layer-0 .ink{animation:se-diagram-trace 2.3s cubic-bezier(.2,.65,.2,1) both}.ruby-slide-01 .se-layered-diagram[data-active="true"] .layer-2 .ink{animation-delay:.45s}
-.ruby-slide-02 .se-layered-diagram[data-active="true"] .layer{animation:ruby-orbit-enter 1.4s both;transform-origin:410px 285px}
 .ruby-slide-03 .se-layered-diagram[data-active="true"] .layer{animation:ruby-gather 1.2s both}
 .ruby-slide-04 .se-layered-diagram[data-active="true"] .ink{animation:ruby-signal 1.8s both;transform-origin:center bottom}
 .ruby-slide-05 .se-layered-diagram[data-active="true"] .node{animation:ruby-runtime 1.2s both}
@@ -56,3 +63,190 @@
 @keyframes ruby-system-in{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
 @keyframes ruby-heat-in{from{opacity:.1;transform:translateY(35px)}to{opacity:1;transform:translateY(0)}}
 @keyframes ruby-compile-in{from{opacity:0;transform:scaleX(1.08)}to{opacity:1;transform:scaleX(1)}}
+.ruby-slide-01 .ruby-layout { padding-top: 0; align-items: center; }
+.ruby-slide-01 .ruby-words { grid-column: 1 / span 6; align-self: center; position: relative; z-index: 1; }
+.ruby-slide-01 .ruby-words h2 { font: var(--se-text-display) var(--font-sans); letter-spacing: var(--se-tracking-tight); margin-bottom: 32px; white-space: nowrap; }
+.ruby-slide-01 .ruby-layout > .ruby-threads { grid-column: 7 / -1; height: 100%; margin-right: calc(-1 * var(--se-grid-margin-x)); }
+
+/* Slide 2: four looping scenes on the same 12 columns; the caption moves around the scene. */
+.ruby-companions { display: grid; flex: 1; min-height: 0; grid-template-columns: repeat(var(--se-grid-columns), 1fr); column-gap: var(--se-grid-gutter); grid-template-rows: auto 1fr; }
+/* Header: kicker and tabs share the first row, the title runs the full width under them. */
+.ruby-companions > header { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; align-items: center; row-gap: 16px; padding: 32px 0 24px; }
+.ruby-companions > header > .ruby-label { grid-column: 1 / span 4; grid-row: 1; margin: 0; }
+.ruby-companions > header > h2 { grid-column: 1 / -1; grid-row: 2; }
+.ruby-companions h2 { font: var(--se-text-h2) var(--font-sans); letter-spacing: var(--se-tracking-tight); margin: 0; }
+.ruby-tabs { grid-column: 5 / -1; grid-row: 1; justify-self: end; display: flex; white-space: nowrap; }
+.ruby-tabs button { cursor: pointer; display: flex; gap: 8px; align-items: baseline; padding: 9px 14px; border: 1px solid var(--color-border); margin-left: -1px; border-radius: var(--se-radius); background: transparent; color: var(--color-muted); font: var(--se-text-ui) var(--font-sans); transition: color .3s, border-color .3s; }
+.ruby-tabs button span { font: var(--se-text-label) var(--font-sans); font-variant-numeric: tabular-nums; opacity: .7; }
+.ruby-tabs button[aria-pressed="true"] { position: relative; color: var(--color-accent-fg); background: var(--color-accent); border-color: var(--color-accent); }
+.ruby-tabs button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+
+.ruby-companions-cap { grid-row: 2; align-self: center; animation: ruby-scene-in .7s cubic-bezier(.2,.7,.2,1) both; }
+.ruby-companions-cap h3 { font: var(--se-text-lead) var(--font-sans); letter-spacing: var(--se-tracking-snug); margin: 0 0 16px; color: var(--color-fg); }
+.ruby-companions-cap p { font: var(--se-text-body) var(--font-sans); letter-spacing: var(--se-tracking-snug); color: var(--color-fg); margin: 0 0 24px; text-wrap: pretty; }
+.ruby-companions-cap :is(.ruby-companions-story, .ruby-companions-cost) { font: var(--se-text-small) var(--font-sans); letter-spacing: 0; }
+.ruby-companions-cap .ruby-companions-story { color: var(--color-muted); }
+.ruby-companions-cap .ruby-companions-cost { color: var(--se-diagram-coral); margin: 0; }
+.ruby-companions-story::before, .ruby-companions-cost::before { display: block; margin-bottom: 8px; font: var(--se-text-label) var(--font-sans); }
+.ruby-companions-story::before { content: "In the marketplace"; color: var(--se-diagram-lavender); }
+.ruby-companions-cost::before { content: "Cost"; color: var(--color-muted); }
+.ruby-companions-scene { grid-row: 2; min-height: 0; min-width: 0; display: flex; animation: ruby-scene-in .8s .1s cubic-bezier(.2,.7,.2,1) both; }
+.ruby-scene { width: 100%; height: 100%; overflow: visible; font-family: var(--font-sans); }
+
+/* Caption on columns 1–3, scene on 4–12. */
+.ruby-companions[data-layout="left"] .ruby-companions-cap { grid-column: 1 / span 3; }
+.ruby-companions[data-layout="left"] .ruby-companions-scene { grid-column: 4 / -1; }
+/* Mirrored: scene on 1–9, caption on 10–12. */
+.ruby-companions[data-layout="right"] .ruby-companions-scene { grid-column: 1 / span 9; }
+.ruby-companions[data-layout="right"] .ruby-companions-cap { grid-column: 10 / -1; }
+/* Caption becomes a strip on the columns (2 + 4 + 3 + 3), below then above the scene. */
+.ruby-companions:is([data-layout="below"], [data-layout="above"]) .ruby-companions-scene { grid-column: 1 / -1; }
+.ruby-companions:is([data-layout="below"], [data-layout="above"]) .ruby-companions-cap { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; align-items: baseline; align-self: stretch; padding: 16px 0 0; border-top: 1px solid var(--color-border); }
+.ruby-companions:is([data-layout="below"], [data-layout="above"]) .ruby-companions-cap > * { grid-column: span 3; margin: 0; }
+.ruby-companions:is([data-layout="below"], [data-layout="above"]) .ruby-companions-cap > h3 { grid-column: span 2; }
+.ruby-companions:is([data-layout="below"], [data-layout="above"]) .ruby-companions-cap > p:first-of-type { grid-column: span 4; }
+.ruby-companions[data-layout="below"] { grid-template-rows: auto 1fr auto; }
+.ruby-companions[data-layout="below"] .ruby-companions-cap { grid-row: 3; }
+.ruby-companions[data-layout="above"] { grid-template-rows: auto auto 1fr; }
+.ruby-companions[data-layout="above"] .ruby-companions-scene { grid-row: 3; }
+.ruby-companions[data-layout="above"] .ruby-companions-cap { padding: 0 0 16px; border-top: 0; border-bottom: 1px solid var(--color-border); margin-bottom: 16px; }
+@keyframes ruby-scene-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ruby-companions-cap, .ruby-companions-scene { animation: none; } }
+
+/* Design-system sheet (D): talk-specific specimens. */
+.ruby-ds-type > div { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--color-border); }
+.ruby-ds-type > div > div { display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+.ruby-ds-type strong { font-weight: 400; }
+.ruby-ds-type p { margin: 0; }
+.ruby-ds-roles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px 24px; }
+.ruby-ds-roles > div { display: grid; grid-template-columns: 28px 1fr; column-gap: 12px; align-items: center; font-size: 14px; }
+.ruby-ds-roles span { grid-row: span 2; width: 28px; height: 28px; }
+.ruby-ds-roles strong { font-weight: 400; }
+
+/* Footnote: the precise numbers behind a starred claim. The slide carries the idea; this carries the accuracy. */
+.ruby-layout .ruby-words:has(.ruby-footnote) { align-self: stretch; display: flex; flex-direction: column; }
+.ruby-footnote { margin: auto 0 0; padding-top: 16px; border-top: 1px solid var(--color-border); color: var(--color-muted); font: var(--se-text-label) var(--font-sans); max-width: 52ch; text-wrap: pretty; }
+
+/* Slide 6: the waterfall needs the room. Words on 1–4, chart on 5–12. */
+.ruby-slide-coldstart .ruby-words { grid-column: 1 / span 4; }
+.ruby-slide-coldstart .ruby-layout > :not(.ruby-words) { grid-column: 5 / -1; }
+.ruby-slide-coldstart .ruby-words h2 { font: var(--se-text-h2) var(--font-sans); letter-spacing: var(--se-tracking-tight); }
+
+/* Wide scenes (code, waterfalls): words on 1–4, scene on 5–12. */
+.ruby-wide .ruby-words { grid-column: 1 / span 4; }
+.ruby-wide .ruby-layout > :not(.ruby-words) { grid-column: 5 / -1; }
+.ruby-wide .ruby-words h2 { font: var(--se-text-h2) var(--font-sans); letter-spacing: var(--se-tracking-tight); }
+
+/* Stage scenes: the SVG covers all 12 columns in stage pixels (1152 wide), the words sit over columns 1–4.
+   When the figure turns data-wide, the words fold away and the scene moves into their room. One curve for both. */
+.ruby-stage { --ruby-fold: cubic-bezier(.65, 0, .35, 1); }
+.ruby-stage .ruby-layout { padding-top: 40px; }
+.ruby-stage .ruby-layout > * { grid-row: 1; }
+.ruby-stage .ruby-layout > :not(.ruby-words) { grid-column: 1 / -1; }
+.ruby-stage .ruby-words { grid-column: 1 / span 4; z-index: 1; padding-bottom: 72px; transition: opacity .4s var(--ruby-fold) .25s, transform .9s var(--ruby-fold); }
+.ruby-stage .ruby-words h2 { font: var(--se-text-h2) var(--font-sans); letter-spacing: var(--se-tracking-tight); }
+.ruby-stage .se-layered-diagram figcaption { margin-left: calc((100% - 11 * var(--se-grid-gutter)) / 3 + 4 * var(--se-grid-gutter)); transition: margin-left .9s var(--ruby-fold); }
+.ruby-stage .ruby-layout:has(> [data-wide="true"]) .ruby-words { opacity: 0; transform: translateX(-32px); pointer-events: none; transition: opacity .35s var(--ruby-fold), transform .9s var(--ruby-fold); }
+.ruby-stage .ruby-layout:has(> [data-wide="true"]) figcaption { margin-left: 0; }
+@media (prefers-reduced-motion: reduce) { .ruby-stage :is(.ruby-words, figcaption) { transition: none !important; } }
+
+/* Title layouts. The title takes the shape the scene leaves free, so consecutive slides don't repeat:
+   side (columns 1–4, tall scenes) · fold (side, then hands over the stage) · band (one line across
+   the top, wide and short scenes) · caption (scene first, title strip underneath, for loops you watch).
+   Band and caption put the footnote in the bottom margin, like a page footnote. */
+.ruby-band .ruby-layout, .ruby-caption .ruby-layout { padding-top: 32px; grid-template-rows: auto minmax(0, 1fr); row-gap: 24px; }
+.ruby-band .ruby-layout > :not(.ruby-words), .ruby-caption .ruby-layout > :not(.ruby-words) { grid-column: 1 / -1; }
+.ruby-band .ruby-layout > .ruby-words, .ruby-caption .ruby-layout > .ruby-words { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; align-items: end; }
+.ruby-band .ruby-words .ruby-label, .ruby-caption .ruby-words .ruby-label { grid-column: 1 / span 8; grid-row: 1; margin-bottom: 16px; }
+.ruby-band .ruby-words h2, .ruby-caption .ruby-words h2 { grid-column: 1 / span 8; grid-row: 2; margin: 0; font: var(--se-text-h2) var(--font-sans); letter-spacing: var(--se-tracking-tight); text-wrap: nowrap; }
+.ruby-band .ruby-words .ruby-subtitle, .ruby-caption .ruby-words .ruby-subtitle { grid-column: 9 / -1; grid-row: 1 / span 2; font: var(--se-text-small) var(--font-sans); letter-spacing: 0; }
+.ruby-band .ruby-footnote, .ruby-caption .ruby-footnote { position: absolute; left: 0; right: 180px; bottom: calc(30px - var(--se-grid-margin-bottom)); max-width: none; margin: 0; padding: 0; border: 0; }
+/* Band: the title gets air above the scene. */
+.ruby-band .ruby-layout { row-gap: 40px; }
+/* Caption: the scene comes first, the words sit under a rule at the bottom. */
+.ruby-caption .ruby-layout { grid-template-rows: minmax(0, 1fr) auto; }
+.ruby-caption .ruby-layout > :not(.ruby-words) { grid-row: 1; }
+.ruby-caption .ruby-layout > .ruby-words { grid-row: 2; padding-top: 20px; border-top: 1px solid var(--color-border); }
+.ruby-caption .ruby-words .ruby-label { grid-column: 1 / span 3; grid-row: 1; margin: 0 0 6px; align-self: start; }
+.ruby-caption .ruby-words h2 { grid-column: 1 / span 8; grid-row: 2; }
+
+/* Slide 18: the bonus divider. Full bleed, no frame: a shader field (Bonus.tsx) with poster type on the grid. */
+.ruby-slide.ruby-bonus { padding: 0; background: var(--color-bg); }
+.ruby-bonus-field { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+/* The word, alone in the middle: lowercase and heavy, because it's the fun part. No shadow. */
+.ruby-bonus-word { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding-bottom: 0.06em; color: var(--color-fg); font: 800 190px/1 var(--font-sans); letter-spacing: -0.065em; text-indent: -0.065em; pointer-events: none; }
+
+/* A browser window for live demos: square, a tab and an address bar, lifted off the slide by a hard
+   shadow; a thin accent rule and a pulsing square say it's live. */
+.ruby-browser { position: relative; display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; border: 1px solid color-mix(in srgb, var(--color-fg) 22%, transparent); background: var(--color-surface); box-shadow: 10px 10px 0 color-mix(in srgb, var(--color-accent) 14%, transparent), 0 30px 80px -30px #000; }
+.ruby-browser[data-live="true"]::before { content: ""; position: absolute; inset: -1px -1px auto; height: 2px; background: var(--color-accent); z-index: 1; }
+.ruby-browser-tabs { display: flex; align-items: center; gap: 14px; height: 34px; padding: 0 12px; background: var(--color-bg); border-bottom: 1px solid var(--color-border); font: var(--se-text-label) var(--font-sans); color: var(--color-muted); }
+.ruby-browser-dots { display: flex; gap: 6px; }
+.ruby-browser-dots i { display: block; width: 9px; height: 9px; background: var(--color-border); }
+.ruby-browser-tab { align-self: stretch; display: flex; align-items: center; padding: 0 14px; margin-bottom: -1px; background: var(--color-surface); border: 1px solid var(--color-border); border-bottom-color: var(--color-surface); color: var(--color-fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50%; }
+.ruby-browser-live { margin-left: auto; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.ruby-browser-live i { width: 7px; height: 7px; background: var(--color-muted); }
+.ruby-browser[data-live="true"] .ruby-browser-live { color: var(--color-accent); }
+.ruby-browser[data-live="true"] .ruby-browser-live i { background: var(--color-accent); animation: ruby-live 1.6s ease-in-out infinite; }
+@keyframes ruby-live { 50% { opacity: .25; } }
+.ruby-browser-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--color-border); font: var(--se-text-label) var(--font-sans); color: var(--color-muted); }
+.ruby-browser-url { flex: 1; min-width: 0; display: flex; align-items: baseline; overflow: hidden; white-space: nowrap; padding: 6px 10px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-fg); font-size: 12.5px; }
+.ruby-browser-url > .ruby-mono { overflow: hidden; text-overflow: ellipsis; }
+.ruby-browser-scheme { color: var(--color-muted); }
+.ruby-browser-actions { display: flex; flex: none; }
+.ruby-slide .ruby-browser-actions :is(button, a) { width: auto; height: auto; cursor: pointer; padding: 6px 12px; border: 1px solid var(--color-border); background: transparent; color: var(--color-fg); font: inherit; text-decoration: none; line-height: 1.2; }
+.ruby-browser-actions :is(button, a) + :is(button, a) { border-left: 0; }
+.ruby-browser-actions :is(button, a):hover { color: var(--color-accent); }
+.ruby-browser-actions button:disabled { opacity: .4; cursor: default; }
+.ruby-browser-actions :is(button, a):focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.ruby-browser iframe { flex: 1; width: 100%; min-height: 0; border: 0; background: var(--color-bg); display: block; }
+.ruby-browser-empty { flex: 1; display: grid; place-items: center; color: var(--color-muted); font: var(--se-text-small) var(--font-sans); }
+@media (prefers-reduced-motion: reduce) { .ruby-browser-live i { animation: none !important; } }
+
+
+/* Slide 20: the scene and the live browser share one cell; the browser takes over on the last step. */
+.se-layered-diagram-art:has(> .ruby-spinel-stack) { position: relative; }
+.ruby-spinel-stack { position: absolute; inset: 0; }
+.ruby-spinel-stack > svg { position: absolute; inset: 0; }
+.ruby-spinel-live { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(var(--se-grid-columns), 1fr); column-gap: var(--se-grid-gutter); opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1); }
+.ruby-spinel-live[data-on="true"] { opacity: 1; transform: none; pointer-events: auto; }
+.ruby-spinel-live > .ruby-browser { grid-column: 1 / span 9; width: calc(100% - 10px); height: calc(100% - 10px); }
+.ruby-spinel-numbers { grid-column: 10 / -1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto 1fr; column-gap: 16px; row-gap: 18px; align-content: start; min-height: 0; }
+.ruby-spinel-numbers div { display: grid; gap: 4px; align-content: start; padding-top: 10px; border-top: 1px solid var(--color-border); }
+.ruby-spinel-numbers b { font: 300 26px/1 var(--font-sans); letter-spacing: var(--se-tracking-tight); color: var(--color-accent); font-variant-numeric: tabular-nums; }
+.ruby-spinel-numbers span { font: var(--se-text-small) var(--font-sans); color: var(--color-fg); }
+.ruby-spinel-numbers small { font: var(--se-text-label) var(--font-sans); color: var(--color-muted); }
+.ruby-spinel-numbers p { grid-column: 1 / -1; align-self: end; margin: 0 0 10px; font: var(--se-text-label) var(--font-sans); color: var(--color-muted); }
+@media (prefers-reduced-motion: reduce) { .ruby-spinel-live { transition: none; } }
+
+/* Closing: one word, set huge and light on the bottom margin; the opening threads behind it, quieter. */
+.ruby-close { position: relative; flex: 1; display: grid; grid-template-columns: repeat(var(--se-grid-columns), 1fr); column-gap: var(--se-grid-gutter); grid-template-rows: 1fr auto auto; }
+.ruby-close-threads { position: absolute; top: -16px; bottom: 96px; left: calc(-1 * var(--se-grid-margin-x)); right: calc(-1 * var(--se-grid-margin-x)); }
+.ruby-close h2 { position: relative; grid-column: 1 / -1; grid-row: 2; margin: 0 0 -0.12em -0.06em; font: 200 216px/0.85 var(--font-sans); letter-spacing: -0.07em; color: var(--color-fg); }
+.ruby-close-questions { position: relative; grid-column: 9 / -1; grid-row: 2; align-self: end; margin: 0 0 14px; font: var(--se-text-h2) var(--font-sans); letter-spacing: var(--se-tracking-tight); color: var(--color-accent); }
+
+/* A band slide can hand its scene the whole stage on a late step (SteppedScene wideFrom): the title band folds away. */
+.ruby-band .ruby-layout:has(> [data-wide="true"]) { grid-template-rows: minmax(0, 1fr); }
+.ruby-band .ruby-layout:has(> [data-wide="true"]) > .ruby-words { display: none; }
+.ruby-band .ruby-layout:has(> [data-wide="true"]) > :not(.ruby-words) { grid-row: 1; }
+
+/* Slide 2: who I am on columns 1–5 (name, a two-line lede, links as a small table); four facts on
+   columns 7–12 as a 2×2 grid, each with a coloured rule from the deck's palette. */
+.ruby-about { flex: 1; display: grid; grid-template-columns: repeat(var(--se-grid-columns), 1fr); column-gap: var(--se-grid-gutter); align-items: center; padding: 8px 0 24px; }
+.ruby-about-who { grid-column: 1 / span 5; display: flex; flex-direction: column; }
+.ruby-about-who h2 { margin: 0 0 20px -0.03em; font: var(--se-text-h1) var(--font-sans); letter-spacing: var(--se-tracking-tight); color: var(--color-fg); }
+.ruby-about-lede { margin: 0 0 40px; font: var(--se-text-lead) var(--font-sans); letter-spacing: var(--se-tracking-snug); color: var(--color-muted); text-wrap: pretty; }
+.ruby-about-links { list-style: none; margin: 0; padding: 0; display: grid; }
+.ruby-about-links li { display: grid; grid-template-columns: 96px 1fr; align-items: baseline; padding: 11px 0; border-top: 1px solid var(--color-border); }
+.ruby-about-links li:last-child { border-bottom: 1px solid var(--color-border); }
+.ruby-about-links span { font: var(--se-text-label) var(--font-sans); color: var(--color-muted); }
+.ruby-about-links a { font: var(--se-text-body) var(--font-sans); letter-spacing: var(--se-tracking-snug); color: var(--color-fg); text-decoration: none; }
+.ruby-about-links a:hover { color: var(--color-accent); }
+.ruby-about-links a:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+.ruby-about-facts { grid-column: 7 / -1; margin: 0; display: grid; grid-template-columns: 1fr 1fr; column-gap: var(--se-grid-gutter); row-gap: 40px; }
+.ruby-about-facts div { display: flex; flex-direction: column; gap: 10px; padding-top: 16px; border-top: 2px solid var(--fact); }
+.ruby-about-facts dt { font: var(--se-text-ui) var(--font-sans); letter-spacing: .02em; color: var(--fact); }
+.ruby-about-facts dd { margin: 0; font: var(--se-text-lead) var(--font-sans); letter-spacing: var(--se-tracking-snug); color: var(--color-fg); text-wrap: pretty; }
+
+/* Slide 18 is two steps, but the terrain is drawn to the full cell; its own meter says which step it is. */
+.ruby-slide-when .se-layered-diagram figcaption { display: none; }
