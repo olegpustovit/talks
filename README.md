@@ -42,8 +42,8 @@ make deploy          # linux/arm64 → oracle-vm + smdctl
 
 ## Frontend-only deployment
 
-The frontend runs at https://talks-4uu.pages.dev on Cloudflare Pages.
-`talks.olegpustovit.com` is registered with Pages and awaits its CNAME record.
+The frontend runs at https://talks.olegpustovit.com on Cloudflare Pages
+(also available at https://talks-4uu.pages.dev).
 It runs entirely in the browser, with keyboard, touch, fullscreen, and speaker
 notes. Phone remote control requires the separate Go deployment.
 
@@ -59,8 +59,8 @@ Set the repository secret `CLOUDFLARE_API_TOKEN` with Cloudflare Pages Edit;
 OAuth login is not a persistent CI credential. The project uses Direct Upload
 because the account's GitHub installation could not connect during setup.
 
-DNS setup: add a CNAME named `talks` in `olegpustovit.com` pointing to
-`talks-4uu.pages.dev`. Pages already has the custom domain association.
+DNS uses a proxied CNAME named `talks` in `olegpustovit.com` pointing to
+`talks-4uu.pages.dev`, with the custom domain associated in Pages.
 
 For Go deployments, copy `smdctl.yml` to the ignored `smdctl.local.yml` and set
 `SLIDES_PASSWORD` there. `make deploy` requires that private local file. Never
