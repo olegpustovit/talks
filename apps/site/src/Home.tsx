@@ -12,6 +12,16 @@ export function Home() {
             Slide decks
           </h1>
           <p className="max-w-xl text-lg text-muted">
+            I’m Oleg Pustovit. These are slides and interactive demos from my
+            talks on software engineering. More writing and projects at{" "}
+            <a
+              href="https://olegpustovit.com"
+              className="text-fg underline decoration-border underline-offset-4 hover:text-accent"
+            >
+              olegpustovit.com
+            </a>.
+          </p>
+          <p className="max-w-xl text-base text-muted">
             Open a talk to present. Use arrow keys, Space, or swipe to advance.
             {!isStaticDeployment && <> Or open{" "}
             <Link to="/remote" className="text-fg underline decoration-border underline-offset-4 hover:text-accent">

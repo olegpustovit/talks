@@ -22,7 +22,8 @@ export const talks: TalkEntry[] = [
   {
     slug: "temporal-python-durable-execution",
     title: "Durable Python: from running custom SQS workers and Celery to Temporal",
-    event: "Python Zagreb",
+    // Date: https://www.meetup.com/python-hrvatska/events/316481848/
+    event: "Python Zagreb · 15 September 2026",
     summary:
       "Start from a cron-based 14-day trial, then show what the same feature looks like when a process can survive a restart without losing its place.",
     component: TemporalPythonDurableExecution,
